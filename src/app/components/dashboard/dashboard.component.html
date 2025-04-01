@@ -6,7 +6,11 @@
   <div class="w-16 md:w-64 bg-white dark:bg-gray-800 shadow-md">
     <div class="flex flex-col h-full">
       <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-        <h1 class="text-xl font-bold text-center md:text-left text-primary hidden md:block">Voltenn</h1>
+        <h1
+          class="text-xl font-bold text-center md:text-left text-primary hidden md:block"
+        >
+          Voltenn
+        </h1>
         <h1 class="text-xl font-bold text-center md:hidden text-primary">V</h1>
       </div>
       <nav class="flex-1 pt-4">
@@ -16,12 +20,14 @@
               (click)="setActiveTab(tab.id)"
               [ngClass]="{
                 'flex items-center w-full p-2 text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-700': true,
-                'bg-gray-100 dark:bg-gray-700 text-primary': activeTab === tab.id,
-                'text-gray-600 dark:text-gray-400': activeTab !== tab.id
+                'bg-gray-100 dark:bg-gray-700 text-primary':
+                  activeTab === tab.id,
+                'text-gray-600 dark:text-gray-400': activeTab !== tab.id,
               }"
             >
               <div class="flex items-center justify-center w-10 h-10">
-                <mat-icon>{{ tab.icon }}</mat-icon>
+                <span class="material-icons">pie_chart</span>
+                <!-- <mat-icon>{{ tab.icon }}</mat-icon> -->
               </div>
               <span class="ml-2 hidden md:inline">{{ tab.name }}</span>
             </button>
@@ -31,7 +37,10 @@
       <div class="p-4 border-t border-gray-200 dark:border-gray-700">
         <div class="flex items-center justify-center md:justify-start">
           <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700"></div>
-          <span class="ml-2 text-sm text-gray-600 dark:text-gray-400 hidden md:inline">User</span>
+          <span
+            class="ml-2 text-sm text-gray-600 dark:text-gray-400 hidden md:inline"
+            >User</span
+          >
         </div>
       </div>
     </div>
@@ -48,8 +57,14 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <app-home *ngIf="activeTab === 'home'" class="col-span-full"></app-home>
       <app-map *ngIf="activeTab === 'map'" class="col-span-full"></app-map>
-      <app-outages *ngIf="activeTab === 'outages'" class="col-span-full"></app-outages>
-      <app-predict *ngIf="activeTab === 'predict'" class="col-span-full"></app-predict>
+      <app-outages
+        *ngIf="activeTab === 'outages'"
+        class="col-span-full"
+      ></app-outages>
+      <app-predict
+        *ngIf="activeTab === 'predict'"
+        class="col-span-full"
+      ></app-predict>
     </div>
   </div>
 </div>

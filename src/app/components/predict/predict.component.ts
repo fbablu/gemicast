@@ -4,8 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-predict',
   imports: [],
   templateUrl: './predict.component.html',
-  styleUrl: './predict.component.css'
+  styleUrl: './predict.component.css',
 })
-export class PredictComponent {
-
-}
+export class PredictComponent {}

@@ -1,14 +1,14 @@
 /* src/styles.css */
 /* Global styles for the Weather Outage Prediction Dashboard */
 
-@import 'tailwindcss';
+@import "tailwindcss";
 /* 
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities'; */
 
 /* Angular Material theme integration */
-@import '@angular/material/prebuilt-themes/indigo-pink.css';
+/* @import '@angular/material/prebuilt-themes/indigo-pink.css'; */
 
 /* Custom theme variables */
 :root {
@@ -32,7 +32,8 @@
 }
 
 /* Set overall defaults */
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif;
