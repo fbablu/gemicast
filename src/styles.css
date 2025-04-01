@@ -1,16 +1,7 @@
-/* src/styles.css */
-/* Global styles for the Weather Outage Prediction Dashboard */
-
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Text:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans&display=swap');
 @import "tailwindcss";
-/* 
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities'; */
 
-/* Angular Material theme integration */
-/* @import '@angular/material/prebuilt-themes/indigo-pink.css'; */
-
-/* Custom theme variables */
 :root {
   --primary-color: #3f51b5;
   --primary-lighter: #c5cae9;
@@ -19,22 +10,39 @@
   --warn-color: #f44336;
 }
 
-/* Dark mode support */
 .dark {
   --primary-color: #5c6bc0;
   --primary-lighter: #7986cb;
   --primary-darker: #3949ab;
 }
 
-/* Primary color classes */
 .text-primary {
   color: var(--primary-color);
 }
 
-/* Set overall defaults */
 html,
 body {
   height: 100%;
   margin: 0;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
+  font-family: 'DM Sans', sans-serif; 
+}
+
+.dm-serif-text-regular {
+  font-family: 'DM Serif Text', serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.dm-serif-text-regular-italic {
+  font-family: 'DM Serif Text', serif;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.dark .dm-serif-text-regular {
+  font-family: 'DM Serif Text', serif;
+}
+
+@theme {
+  --font-dm-serif: 'DM Serif Text', serif;
 }

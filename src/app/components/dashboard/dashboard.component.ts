@@ -26,6 +26,7 @@ interface Tab {
     HomeComponent,
     MapComponent,
   ],
+  standalone: true,
 })
 export class DashboardComponent {
   activeTab: string = 'home';
