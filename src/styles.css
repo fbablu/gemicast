@@ -1,11 +1,16 @@
 @import "tailwindcss";
 
+@theme {
+  --font-dm-serif: "DM Serif Text", serif;
+}
+
 html,
 body {
   height: 100%;
   margin: 0;
   font-family:
-    DM Sans, sans-serif;
+    DM Sans,
+    sans-serif;
   font-size: large;
   font-weight: 300;
 }
@@ -42,8 +47,4 @@ body {
 
 .dark .dm-serif-text-regular {
   font-family: "DM Serif Text", serif;
-}
-
-@theme {
-  --font-dm-serif: "DM Serif Text", serif;
 }
