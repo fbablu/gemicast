@@ -1,6 +1,14 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Text:ital@0;1&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans&display=swap');
 @import "tailwindcss";
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family:
+    DM Sans, sans-serif;
+  font-size: large;
+  font-weight: 300;
+}
 
 :root {
   --primary-color: #3f51b5;
@@ -20,29 +28,22 @@
   color: var(--primary-color);
 }
 
-html,
-body {
-  height: 100%;
-  margin: 0;
-  font-family: 'DM Sans', sans-serif; 
-}
-
 .dm-serif-text-regular {
-  font-family: 'DM Serif Text', serif;
+  font-family: "DM Serif Text", serif;
   font-weight: 400;
   font-style: normal;
 }
 
 .dm-serif-text-regular-italic {
-  font-family: 'DM Serif Text', serif;
+  font-family: "DM Serif Text", serif;
   font-weight: 400;
   font-style: italic;
 }
 
 .dark .dm-serif-text-regular {
-  font-family: 'DM Serif Text', serif;
+  font-family: "DM Serif Text", serif;
 }
 
 @theme {
-  --font-dm-serif: 'DM Serif Text', serif;
+  --font-dm-serif: "DM Serif Text", serif;
 }
