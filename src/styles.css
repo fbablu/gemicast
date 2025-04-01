@@ -1,1 +1,39 @@
-/* You can add global styles to this file, and also import other style files */
+/* src/styles.css */
+/* Global styles for the Weather Outage Prediction Dashboard */
+
+@import 'tailwindcss';
+/* 
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities'; */
+
+/* Angular Material theme integration */
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+/* Custom theme variables */
+:root {
+  --primary-color: #3f51b5;
+  --primary-lighter: #c5cae9;
+  --primary-darker: #303f9f;
+  --accent-color: #ff4081;
+  --warn-color: #f44336;
+}
+
+/* Dark mode support */
+.dark {
+  --primary-color: #5c6bc0;
+  --primary-lighter: #7986cb;
+  --primary-darker: #3949ab;
+}
+
+/* Primary color classes */
+.text-primary {
+  color: var(--primary-color);
+}
+
+/* Set overall defaults */
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
