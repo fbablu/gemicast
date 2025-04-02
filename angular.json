@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "outenn": {
+    "gemicast": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -18,7 +18,7 @@
           "builder": "@angular-devkit/build-angular:application",
           "options": {
             "outputPath": {
-              "base": "dist/outenn"
+              "base": "dist/gemicast"
             },
             "index": "src/index.html",
             "polyfills": ["zone.js"],
@@ -58,10 +58,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "outenn:build:production"
+              "buildTarget": "gemicast:build:production"
             },
             "development": {
-              "buildTarget": "outenn:build:development"
+              "buildTarget": "gemicast:build:development"
             }
           },
           "defaultConfiguration": "development"

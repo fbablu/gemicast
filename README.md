@@ -1,6 +1,6 @@
-# Voltenn: Predictive Power Outage Platform
+# Gemicast: Predictive Power Outage Platform
 
-Voltenn is a predictive dashboard that combines real-time weather data, historical outage patterns, and infrastructure information to forecast power disruptions before they occur, enabling proactive measures.
+Gemicast is a predictive dashboard that combines real-time weather data, historical outage patterns, and infrastructure information to forecast power disruptions before they occur, enabling proactive measures.
 
 ## Features
 
@@ -34,8 +34,8 @@ Voltenn is a predictive dashboard that combines real-time weather data, historic
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/your-org/voltenn.git
-   cd voltenn
+   git clone https://github.com/your-org/Gemicast.git
+   cd Gemicast
    ```
 
 2. Install dependencies:
@@ -124,7 +124,7 @@ project-root/
 
 ## Machine Learning Integration
 
-The voltenn platform leverages several ML models to provide accurate outage predictions:
+The Gemicast platform leverages several ML models to provide accurate outage predictions:
 
 - **TensorFlow / TensorFlow.js**: For in-browser prediction capabilities
 - **Google Gemini API**: Used for natural language alert generation and insights
