@@ -8,6 +8,9 @@ import { Component } from '@angular/core';
 })
 export class ProfileComponent {
 
+
+
+  // this is my test code
   //firebase authoraization code stuff 
 
 }
