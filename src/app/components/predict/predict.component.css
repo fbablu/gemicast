@@ -1,5 +1,5 @@
 /* src/app/components/predict/predict.component.css */
-/* Styles for AI-powered prediction component */
+/* Styles for AI-powered prediction component with fixed input area */
 
 @import "material-icons/iconfont/material-icons.css";
 
@@ -51,17 +51,37 @@
 }
 
 .card-body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 75vh;
+}
+
+/* Chat area styles */
+.chat-scroll-area {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 0;
+  padding-bottom: 4.5rem;
+  scroll-padding: 1rem;
+  scroll-padding: 50%;
+}
+
+.chat-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
 }
 
 .messages-container {
   flex: 1;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
   padding: 1rem;
+  overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
@@ -81,7 +101,7 @@
 
 /* Empty state styles */
 .empty-state {
-  height: 100%;
+  min-height: 65vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -89,6 +109,7 @@
   text-align: center;
   padding: 1.5rem;
   gap: 2rem;
+  margin: auto 0;
 }
 
 .icon-container {
@@ -156,19 +177,19 @@
 }
 
 .action-button:nth-child(1) .material-icons {
-  color: #60a5fa; /* Blue */
+  color: #60a5fa;
 }
 
 .action-button:nth-child(2) .material-icons {
-  color: #c084fc; /* Purple */
+  color: #c084fc;
 }
 
 .action-button:nth-child(3) .material-icons {
-  color: #4ade80; /* Green */
+  color: #4ade80;
 }
 
 .action-button:nth-child(4) .material-icons {
-  color: #fbbf24; /* Yellow */
+  color: #fbbf24;
 }
 
 .action-name {
@@ -184,9 +205,16 @@
 
 /* Message list styles */
 .message-list {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  overflow-y: auto;
+  padding-top: 2rem;
+}
+
+.message-list.with-messages {
+  justify-content: flex-start;
 }
 
 .message-container {
@@ -273,8 +301,14 @@
 
 /* Input area styles */
 .input-area {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: var(--card-bg, #1e293b);
   border-top: 1px solid var(--border-color, #2d3748);
   padding: 1rem;
+  z-index: 10;
 }
 
 .input-container {
@@ -375,46 +409,55 @@ input[type="text"]:focus {
 /* Menu styles */
 .model-menu {
   background-color: #1e293b;
-  border: 1px solid #2d3748;
+  border: 1px solid #334155;
   border-radius: 0.5rem;
   overflow: hidden;
+  min-width: 220px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
 }
 
 .menu-header {
   padding: 0.75rem 1rem;
+  background-color: #1e293b;
+  border-bottom: 1px solid #334155;
 }
 
 .menu-title {
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #e2e8f0;
   margin: 0;
-  color: #f8fafc;
 }
 
 .menu-description {
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: #cbd5e1;
   margin: 0.25rem 0 0 0;
 }
 
 mat-divider {
-  background-color: #2d3748;
+  background-color: #334155;
 }
 
 button.mat-menu-item {
-  color: #f8fafc;
+  color: #f1f5f9;
+  font-size: 0.85rem;
+  transition: background-color 0.2s ease;
 }
 
 button.mat-menu-item:hover {
-  background-color: #2d3748;
+  background-color: #334155;
 }
 
 button.mat-menu-item.selected-model {
-  background-color: rgba(59, 130, 246, 0.1);
+  background-color: rgba(59, 130, 246, 0.2);
+  font-weight: 600;
 }
 
 button.mat-menu-item .material-icons {
   margin-right: 0.5rem;
+  font-size: 18px;
+  color: #93c5fd;
 }
 
 @media (max-width: 768px) {

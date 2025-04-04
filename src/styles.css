@@ -1,16 +1,14 @@
 @import "tailwindcss";
 
 @theme {
-  --font-dm-serif: "DM Serif Text", serif;
+  --font-dm-sans: "DM Sans", sans-serif;
 }
 
 html,
 body {
   height: 100%;
   margin: 0;
-  font-family:
-    DM Sans,
-    sans-serif;
+  font-family: "DM Sans", sans-serif;
   font-size: large;
   font-weight: 300;
 }
@@ -33,27 +31,18 @@ body {
   color: var(--primary-color);
 }
 
-.dm-serif-text-regular {
-  font-family: "DM Serif Text", serif;
+.dm-sans-regular {
+  font-family: "DM Sans", sans-serif;
   font-weight: 400;
   font-style: normal;
 }
 
-.dm-serif-text-regular-italic {
-  font-family: "DM Serif Text", serif;
+.dm-sans-italic {
+  font-family: "DM Sans", sans-serif;
   font-weight: 400;
   font-style: italic;
 }
 
-.dark .dm-serif-text-regular {
-  font-family: "DM Serif Text", serif;
-}
-
-html,
-body {
-  height: 100%;
-}
-body {
-  margin: 0;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
+.dark .dm-sans-regular {
+  font-family: "DM Sans", sans-serif;
 }

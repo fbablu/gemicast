@@ -88,10 +88,8 @@ export class PredictComponent implements OnInit {
   handleSend(): void {
     if (!this.input.trim() && !this.currentAction) return;
 
-    // Generate a unique ID for the message
     const id = Math.random().toString(36).substring(2, 11);
 
-    // Create user message
     const userMessage: Message = {
       id,
       content: this.input || this.getDefaultPromptForAction(this.currentAction),
@@ -99,14 +97,11 @@ export class PredictComponent implements OnInit {
       timestamp: new Date(),
     };
 
-    // Add user message to chat
     this.messages = [...this.messages, userMessage];
 
-    // Clear input and set loading state
     this.input = '';
     this.isLoading = true;
 
-    // Focus input field
     setTimeout(() => {
       const inputElement = document.querySelector(
         'input[type="text"]',
@@ -119,13 +114,10 @@ export class PredictComponent implements OnInit {
     // Simulate API call
     setTimeout(() => {
       try {
-        // Generate response based on action type
         const responseContent = this.generateResponse(
           this.currentAction,
           userMessage.content,
         );
-
-        // Create assistant message
         const assistantMessage: Message = {
           id: Math.random().toString(36).substring(2, 11),
           content: responseContent,
@@ -163,7 +155,7 @@ export class PredictComponent implements OnInit {
   }
 
   generateResponse(action: ActionType | null, userInput: string): string {
-    // In a real app, this would call the Gemini API with the selected model
+    // Call the Gemini API with the selected model
     const modelInfo = `Using Gemini ${this.getSelectedModelName()} to analyze your request.`;
 
     switch (action) {
@@ -211,20 +203,14 @@ export class PredictComponent implements OnInit {
 
   handleCalendarSync(): void {
     if (this.isCalendarSynced) {
-      // Unsync calendar
       this.isCalendarSynced = false;
       return;
     }
-
-    // Start syncing animation
     this.isCalendarSyncing = true;
-
     // Simulate API call to sync calendar
     setTimeout(() => {
       try {
         this.isCalendarSynced = true;
-
-        // Add system message about calendar sync
         const syncMessage: Message = {
           id: Math.random().toString(36).substring(2, 11),
           content:
@@ -244,13 +230,11 @@ export class PredictComponent implements OnInit {
   }
 
   handleWeatherRefresh(): void {
-    // Start refreshing animation
     this.isWeatherRefreshing = true;
 
     // Simulate API call to refresh weather data
     setTimeout(() => {
       try {
-        // Add system message about weather refresh
         const refreshMessage: Message = {
           id: Math.random().toString(36).substring(2, 11),
           content:
@@ -271,8 +255,6 @@ export class PredictComponent implements OnInit {
 
   handleModelChange(modelId: ModelType): void {
     this.selectedModel = modelId;
-
-    // Add system message about model change
     const modelChangeMessage: Message = {
       id: Math.random().toString(36).substring(2, 11),
       content: `I've switched to Gemini ${this.getSelectedModelName()}. How can I assist you with weather and outage predictions?`,
