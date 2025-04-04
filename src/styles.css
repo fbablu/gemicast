@@ -48,3 +48,12 @@ body {
 .dark .dm-serif-text-regular {
   font-family: "DM Serif Text", serif;
 }
+
+html,
+body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
