@@ -4,13 +4,8 @@ import { Component } from '@angular/core';
   selector: 'app-profile',
   imports: [],
   templateUrl: './profile.component.html',
-  styleUrl: './profile.component.css'
+  styleUrl: './profile.component.css',
 })
 export class ProfileComponent {
-
-
-
-  // this is my test code
-  //firebase authoraization code stuff 
-
+  
 }

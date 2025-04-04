@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "outenn": {
+    "gemicast": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -18,14 +18,17 @@
           "builder": "@angular-devkit/build-angular:application",
           "options": {
             "outputPath": {
-              "base": "dist/outenn"
+              "base": "dist/gemicast"
             },
             "index": "src/index.html",
             "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "css",
             "assets": ["src/favicon.ico", "src/assets"],
-            "styles": ["src/styles.css"],
+            "styles": [
+              "@angular/material/prebuilt-themes/azure-blue.css",
+              "src/styles.css"
+            ],
             "scripts": [],
             "browser": "src/main.ts"
           },
@@ -58,10 +61,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "outenn:build:production"
+              "buildTarget": "gemicast:build:production"
             },
             "development": {
-              "buildTarget": "outenn:build:development"
+              "buildTarget": "gemicast:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -73,7 +76,10 @@
             "tsConfig": "tsconfig.spec.json",
             "inlineStyleLanguage": "css",
             "assets": ["src/favicon.ico", "src/assets"],
-            "styles": ["src/styles.css"],
+            "styles": [
+              "@angular/material/prebuilt-themes/azure-blue.css",
+              "src/styles.css"
+            ],
             "scripts": []
           }
         }

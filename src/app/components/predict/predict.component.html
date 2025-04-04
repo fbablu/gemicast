@@ -1,9 +1,238 @@
 <!-- src/app/components/predict/predict.component.html -->
-<!-- Prediction view template displaying AI-powered outage forecasts -->
+<!-- AI-powered prediction view for forecasting weather and outages -->
 
-<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-  <h2 class="text-xl font-semibold mb-4">Predict</h2>
-  <p class="text-gray-600 dark:text-gray-300">
-    AI-powered predictions for weather and outages.
-  </p>
+<div class="predict-container">
+  <div class="card">
+    <div class="card-header">
+      <div class="flex-header">
+        <span class="material-icons text-accent"></span>
+        <div>
+          <h2 class="card-title">AI Insights</h2>
+          <p class="card-description">
+            Weather and outage predictions powered by Gemini AI
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <div class="chat-wrapper">
+        <div class="chat-scroll-area">
+          <div class="messages-container" #messagesContainer>
+            <!-- Empty state when no messages -->
+            <div *ngIf="messages.length === 0" class="empty-state">
+              <div class="icon-container">
+                <span class="material-icons">bolt</span>
+              </div>
+
+              <div class="empty-text">
+                <h3>Weather & Outage Predictions</h3>
+                <p>
+                  Get AI-powered insights about weather conditions and potential
+                  outages for your events and schedule.
+                </p>
+              </div>
+
+              <div class="action-grid">
+                <button
+                  class="action-button"
+                  (click)="handleActionClick('calendar')"
+                >
+                  <span class="material-icons">calendar_today</span>
+                  <span class="action-name">Connect Google Calendar</span>
+                  <span class="action-description">Analyze your events</span>
+                </button>
+
+                <button
+                  class="action-button"
+                  (click)="handleActionClick('schedule')"
+                >
+                  <span class="material-icons">upload</span>
+                  <span class="action-name">Paste Your Schedule</span>
+                  <span class="action-description"
+                    >Analyze a list of dates</span
+                  >
+                </button>
+
+                <button
+                  class="action-button"
+                  (click)="handleActionClick('event')"
+                >
+                  <span class="material-icons">schedule</span>
+                  <span class="action-name">Plan a New Event</span>
+                  <span class="action-description">Check date suitability</span>
+                </button>
+
+                <button
+                  class="action-button"
+                  (click)="handleActionClick('question')"
+                >
+                  <span class="material-icons">chat</span>
+                  <span class="action-name">Ask Questions</span>
+                  <span class="action-description">Get weather insights</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Message bubbles -->
+            <div
+              class="message-list"
+              [ngClass]="{ 'with-messages': messages.length > 0 }"
+            >
+              <div
+                *ngFor="let message of messages"
+                class="message-container"
+                [ngClass]="{
+                  'user-message': message.role === 'user',
+                  'ai-message': message.role === 'assistant',
+                }"
+              >
+                <div
+                  class="avatar"
+                  [ngClass]="{
+                    'user-avatar': message.role === 'user',
+                    'ai-avatar': message.role === 'assistant',
+                  }"
+                >
+                  <span>{{ message.role === "user" ? "You" : "AI" }}</span>
+                </div>
+
+                <div
+                  class="message-bubble"
+                  [ngClass]="{
+                    'user-bubble': message.role === 'user',
+                    'ai-bubble': message.role === 'assistant',
+                  }"
+                >
+                  <div class="message-content">{{ message.content }}</div>
+                  <div class="message-time">
+                    {{ formatTimestamp(message.timestamp) }}
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="isLoading" class="message-container ai-message">
+                <div class="avatar ai-avatar">
+                  <span>AI</span>
+                </div>
+
+                <div class="message-bubble ai-bubble">
+                  <div class="loading-indicator">
+                    <span class="material-icons spin">sync</span>
+                    <span>Analyzing data...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Input area -->
+        <div class="input-area">
+          <form (ngSubmit)="handleSend()">
+            <div class="input-container">
+              <div class="dropdown">
+                <button
+                  type="button"
+                  class="model-button"
+                  [matMenuTriggerFor]="modelMenu"
+                >
+                  <span class="material-icons">{{
+                    getSelectedModelIcon()
+                  }}</span>
+                </button>
+                <mat-menu #modelMenu="matMenu" class="model-menu">
+                  <div class="menu-header">
+                    <div>
+                      <p class="menu-title">Meet the models</p>
+                      <p class="menu-description">
+                        Use Gemini in Google AI Studio
+                      </p>
+                    </div>
+                  </div>
+                  <mat-divider></mat-divider>
+                  <button
+                    mat-menu-item
+                    *ngFor="let model of modelOptions"
+                    (click)="handleModelChange(model.id)"
+                    [ngClass]="{ 'selected-model': selectedModel === model.id }"
+                  >
+                    <span class="material-icons"> </span>
+                    <span>{{ model.name }}</span>
+                  </button>
+                </mat-menu>
+              </div>
+
+              <input
+                type="text"
+                placeholder="Type your message..."
+                [(ngModel)]="input"
+                name="messageInput"
+                (keydown)="handleKeyDown($event)"
+                [disabled]="isLoading"
+              />
+
+              <div class="action-buttons">
+                <!-- Calendar sync button -->
+                <button
+                  type="button"
+                  class="action-icon-button"
+                  [ngClass]="{ synced: isCalendarSynced }"
+                  (click)="handleCalendarSync()"
+                  [disabled]="isCalendarSyncing"
+                  matTooltip="{{
+                    isCalendarSynced
+                      ? 'Disconnect Google Calendar'
+                      : 'Connect Google Calendar'
+                  }}"
+                >
+                  <span
+                    class="material-icons"
+                    *ngIf="!isCalendarSyncing && !isCalendarSynced"
+                    >calendar_today</span
+                  >
+                  <span class="material-icons spin" *ngIf="isCalendarSyncing"
+                    >sync</span
+                  >
+                  <span
+                    class="material-icons"
+                    *ngIf="!isCalendarSyncing && isCalendarSynced"
+                    >check_circle</span
+                  >
+                </button>
+
+                <!-- Weather refresh button -->
+                <button
+                  type="button"
+                  class="action-icon-button"
+                  (click)="handleWeatherRefresh()"
+                  [disabled]="isWeatherRefreshing"
+                  matTooltip="Refresh weather data"
+                >
+                  <span class="material-icons" *ngIf="!isWeatherRefreshing"
+                    >cloud</span
+                  >
+                  <span class="material-icons spin" *ngIf="isWeatherRefreshing"
+                    >sync</span
+                  >
+                </button>
+
+                <!-- Send button -->
+                <button
+                  type="submit"
+                  class="send-button"
+                  [disabled]="isLoading || (!input.trim() && !currentAction)"
+                >
+                  <span class="material-icons" *ngIf="!isLoading">send</span>
+                  <span class="material-icons spin" *ngIf="isLoading"
+                    >sync</span
+                  >
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
