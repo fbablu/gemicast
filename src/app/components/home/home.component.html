@@ -1,7 +1,283 @@
 <!-- src/app/components/home/home.component.html -->
 <!-- Home dashboard content displaying welcome message and overview -->
 
-<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-  <h2 class="text-xl font-semibold mb-4">Home</h2>
-  <p class="text-gray-600 dark:text-gray-300">Welcome to the Home dashboard.</p>
+<!-- src/app/components/home/home.component.html -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <!-- Prediction Card -->
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+    <h2 class="text-xl font-semibold mb-4">Power Outage Prediction</h2>
+
+    <div *ngIf="loading" class="flex items-center justify-center p-6">
+      <span class="material-icons animate-spin mr-2">sync</span>
+      <span>Loading prediction...</span>
+    </div>
+
+    <div *ngIf="error" class="bg-red-100 text-red-700 p-3 rounded mb-4">
+      {{ error }}
+    </div>
+
+    <div *ngIf="prediction && !loading" class="space-y-4">
+      <!-- Outage Status -->
+      <div class="flex items-center">
+        <div
+          [ngClass]="prediction.outage_likely ? 'bg-red-500' : 'bg-green-500'"
+          class="w-16 h-16 rounded-full flex items-center justify-center mr-4"
+        >
+          <span class="material-icons text-white text-3xl">
+            {{ prediction.outage_likely ? "bolt" : "check_circle" }}
+          </span>
+        </div>
+        <div>
+          <h3 class="text-lg font-medium">
+            {{
+              prediction.outage_likely ? "Outage Likely" : "Normal Conditions"
+            }}
+          </h3>
+          <p class="text-gray-600 dark:text-gray-400">
+            {{
+              prediction.outage_likely
+                ? "Power disruption predicted with " +
+                  (prediction.probability * 100).toFixed(1) +
+                  "% probability"
+                : "Low risk of power disruption"
+            }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Duration Estimation -->
+      <div
+        *ngIf="prediction.outage_likely"
+        class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg"
+      >
+        <div class="flex items-center mb-2">
+          <span class="material-icons mr-2">schedule</span>
+          <h4 class="font-medium">Estimated Duration</h4>
+        </div>
+        <p class="text-2xl font-bold">
+          {{ prediction.estimated_duration.toFixed(1) }} hours
+        </p>
+      </div>
+
+      <!-- Recommendation -->
+      <div class="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg">
+        <div class="flex items-center mb-2">
+          <span class="material-icons mr-2">lightbulb</span>
+          <h4 class="font-medium">Recommendation</h4>
+        </div>
+        <p>{{ prediction.recommendation }}</p>
+      </div>
+
+      <!-- Risk Factors -->
+      <div
+        *ngIf="prediction.risk_factors && prediction.risk_factors.length > 0"
+      >
+        <h4 class="font-medium mb-2">Risk Factors</h4>
+        <div class="space-y-2">
+          <div
+            *ngFor="let risk of prediction.risk_factors"
+            [ngClass]="getSeverityClass(risk.severity)"
+            class="flex items-center p-3 rounded-lg"
+          >
+            <span class="material-icons mr-2">{{
+              getRiskIcon(risk.severity)
+            }}</span>
+            <span class="font-medium">{{ risk.factor }}:</span>
+            <span class="ml-2">{{ risk.value }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weather Input Card -->
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+    <h2 class="text-xl font-semibold mb-4">Current Weather Conditions</h2>
+
+    <form (ngSubmit)="updateWeather()" class="space-y-4">
+      <!-- County Selector -->
+      <div>
+        <label
+          for="county"
+          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >County</label
+        >
+        <select
+          id="county"
+          name="county"
+          [(ngModel)]="currentWeather.county"
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+        >
+          <option *ngFor="let county of counties" [value]="county">
+            {{ county }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Wind Direction -->
+      <div>
+        <label
+          for="windDirection"
+          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Wind Direction (degrees)
+        </label>
+        <input
+          type="number"
+          id="windDirection"
+          name="windDirection"
+          [(ngModel)]="currentWeather.windDirection"
+          min="0"
+          max="360"
+          step="1"
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+        />
+      </div>
+
+      <!-- Wind Speed -->
+      <div>
+        <label
+          for="windSpeed"
+          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Wind Speed (mph)
+        </label>
+        <input
+          type="number"
+          id="windSpeed"
+          name="windSpeed"
+          [(ngModel)]="currentWeather.windSpeed"
+          min="0"
+          max="100"
+          step="1"
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+        />
+      </div>
+
+      <!-- Wind Gust -->
+      <div>
+        <label
+          for="windGust"
+          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Wind Gust (mph)
+        </label>
+        <input
+          type="number"
+          id="windGust"
+          name="windGust"
+          [(ngModel)]="currentWeather.windGust"
+          min="0"
+          max="150"
+          step="1"
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+        />
+      </div>
+
+      <!-- Temperature -->
+      <div>
+        <label
+          for="temperature"
+          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Temperature (°F)
+        </label>
+        <input
+          type="number"
+          id="temperature"
+          name="temperature"
+          [(ngModel)]="currentWeather.temperature"
+          min="-20"
+          max="120"
+          step="1"
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+        />
+      </div>
+
+      <!-- Humidity -->
+      <div>
+        <label
+          for="relativeHumidity"
+          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Relative Humidity (%)
+        </label>
+        <input
+          type="number"
+          id="relativeHumidity"
+          name="relativeHumidity"
+          [(ngModel)]="currentWeather.relativeHumidity"
+          min="0"
+          max="100"
+          step="1"
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+        />
+      </div>
+
+      <!-- Precipitation Chance -->
+      <div>
+        <label
+          for="precipitationChance"
+          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Precipitation Chance (%)
+        </label>
+        <input
+          type="number"
+          id="precipitationChance"
+          name="precipitationChance"
+          [(ngModel)]="currentWeather.precipitationChance"
+          min="0"
+          max="100"
+          step="1"
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+        />
+      </div>
+
+      <div class="pt-4">
+        <button
+          type="submit"
+          class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          <span class="material-icons mr-2">refresh</span>
+          Update Prediction
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Weather Explanation Card -->
+<div class="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+  <h2 class="text-xl font-semibold mb-4">How Our Prediction Works</h2>
+
+  <p class="text-gray-600 dark:text-gray-400 mb-4">
+    Our AI model analyzes weather patterns and historical outage data to predict
+    power disruptions. The most important factors in our prediction are:
+  </p>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+      <h3 class="font-medium mb-2">Wind Direction & Strength</h3>
+      <p class="text-sm">
+        Strong, sustained winds from certain directions can damage power
+        infrastructure.
+      </p>
+    </div>
+
+    <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+      <h3 class="font-medium mb-2">Precipitation & Humidity</h3>
+      <p class="text-sm">
+        Heavy rain and high humidity can lead to equipment failures and short
+        circuits.
+      </p>
+    </div>
+
+    <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+      <h3 class="font-medium mb-2">Seasonal Patterns</h3>
+      <p class="text-sm">
+        Certain times of year are more prone to outages due to weather patterns.
+      </p>
+    </div>
+  </div>
 </div>

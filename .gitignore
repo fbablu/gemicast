@@ -44,4 +44,4 @@ Thumbs.db
 
 
 # Python files
-models/venv/*
+src/app/prediction/models/*
