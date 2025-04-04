@@ -8,6 +8,7 @@ import { OutagesComponent } from '../outages/outages.component';
 import { PredictComponent } from '../predict/predict.component';
 import { HomeComponent } from '../home/home.component';
 import { MapComponent } from '../map/map.component';
+import { ProfileComponent } from '../profile/profile.component';
 
 interface Tab {
   id: string;
@@ -25,6 +26,7 @@ interface Tab {
     PredictComponent,
     HomeComponent,
     MapComponent,
+    ProfileComponent,
   ],
   standalone: true,
 })

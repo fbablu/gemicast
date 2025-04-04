@@ -1,1 +1,31 @@
-<p>profile works!</p>
+<!-- ✅ Checkbox toggle -->
+<div class="mb-4">
+  <label class="flex items-center space-x-2">
+    <input type="checkbox" [(ngModel)]="receiveTexts" />
+    <span class="text-white">Receive text alerts</span>
+  </label>
+</div>
+
+<!-- ✅ Show phone number input only if receiveTexts is true -->
+<div *ngIf="receiveTexts" class="mb-4">
+  <!-- Label -->
+  <label class="block text-white mb-1">Enter your phone number</label>
+
+  <!-- Input box with updated styles -->
+  <input
+    type="text"
+    [(ngModel)]="phoneNumber"
+    class="p-2 border rounded w-full text-white placeholder:italic placeholder-gray-400 bg-transparent"
+    placeholder="Enter your phone number"
+  />
+</div>
+
+<!-- ✅ Save button -->
+<div *ngIf="receiveTexts">
+  <button
+    (click)="savePhoneNumber()"
+    class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+  >
+    Save Preferences
+  </button>
+</div>
