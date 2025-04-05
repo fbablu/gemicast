@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Nashville Weather and Outage Map</title>
+    <style>
+      #map {
+        height: 100vh;
+        width: 100%;
+      }
+      .info-window {
+        font-size: 14px;
+      }
+    </style>
+    <!-- Load the Google Maps API using the global variable -->
+    <script>
+      // Load Google Maps script dynamically using the API key from config
+      document.addEventListener("DOMContentLoaded", function () {
+        const script = document.createElement("script");
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${google_maps_api}`;
+        script.async = true;
+        script.defer = true;
+        script.onload = initMap;
+        document.head.appendChild(script);
+      });
+    </script>
+    <!-- Include config file with API keys -->
+    <script src="config.js"></script>
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <script>
+      const locations = [
+        { name: 'Downtown Nashville', lat: 36.1627, lng: -86.7816 },
+        { name: 'East Nashville', lat: 36.1800, lng: -86.7386 },
+        { name: 'Green Hills', lat: 36.1003, lng: -86.8162 },
+        { name: 'Antioch', lat: 36.0581, lng: -86.6704 },
+        { name: 'Belle Meade', lat: 36.0973, lng: -86.8651 }
+      ];
+
+      function getOutageLikelihood(weather) {
+        if (!weather || !weather.wind || !weather.weather) return 'Unknown';
+        if (weather.wind.speed > 15 || weather.weather[0].main === 'Thunderstorm') {
+          return 'High';
+        } else if (weather.wind.speed > 10) {
+          return 'Moderate';
+        } else {
+          return 'Low';
+        }
+      }
+
+      async function fetchWeather(lat, lon) {
+        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${open_weather_api}&units=metric`;
+        const response = await fetch(url);
+        return await response.json();
+      }
+
+      async function initMap() {
+        const map = new google.maps.Map(document.getElementById("map"), {
+          zoom: 11,
+          center: { lat: 36.1627, lng: -86.7816 }
+        });
+
+        for (const loc of locations) {
+          try {
+            const weather = await fetchWeather(loc.lat, loc.lng);
+            const likelihood = getOutageLikelihood(weather);
+
+            const infoContent = `
+              <div class="info-window">
+                <strong>${loc.name}</strong><br>
+                Temperature: ${weather.main.temp} °C<br>
+                Weather: ${weather.weather[0].main} - ${weather.weather[0].description}<br>
+                Wind Speed: ${weather.wind.speed} m/s<br>
+                <strong>Outage Likelihood:</strong> ${likelihood}
+              </div>`;
+
+            const marker = new google.maps.Marker({
+              position: { lat: loc.lat, lng: loc.lng },
+              map: map,
+              title: loc.name
+            });
+
+            const infoWindow = new google.maps.InfoWindow({
+              content: infoContent
+            });
+
+            marker.addListener("click", () => {
+              infoWindow.open(map, marker);
+            });
+          } catch (error) {
+            console.error(`Failed to fetch weather for ${loc.name}:`, error);
+          }
+        }
+      }
+    </script>
+  </body>
+</html>
