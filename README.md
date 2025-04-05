@@ -65,15 +65,15 @@ The application provides a comprehensive dashboard with multiple components:
 - **Frontend**: Angular 19
 - **Models**: TensorFlow Decision Forests for outage prediction
 - **AI Integration**: Google Gemini API
-- **APIs**:
+- **APIs we considered**:
   - NOAA Weather API
   - Google Maps API
   - Google Calendar API
-- **Data Sources**:
-  - NOAA Weather Data
-  - Oak Ridge Eagle-I Power Outage Data (2014-2022)
-  - Event-correlated Eagle-I power outages (2014-2023)
-  - Tennessee county data
+- **Data Sources for TensorFlow Model**:
+  - [NOAA Weather Data](https://weather-gov.github.io/api/general-faqs)
+  - [Oak Ridge Eagle-I Power Outage Data (2014-2022)](https://doi.ccs.ornl.gov/dataset/ccec86f0-e144-5de8-aee0-fb26028b26e1)
+  - [Event-correlated Eagle-I power outages (2014-2023)](https://data.openei.org/submissions/6458)
+
 
 ## Getting Started
 
