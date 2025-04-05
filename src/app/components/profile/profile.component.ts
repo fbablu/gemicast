@@ -4,6 +4,8 @@ import { getFirestore, collection, addDoc } from '@firebase/firestore';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 
+// Note: Firebase config is safe to expose – no secrets here.
+// Ensure security rules and domain restrictions are set in Firebase.
 const firebaseConfig = {
   apiKey: 'AIzaSyD1TfLL2Sdfomsf1y_W1AGBW_SNPuKkic',
   authDomain: 'voltennplatform.firebaseapp.com',
