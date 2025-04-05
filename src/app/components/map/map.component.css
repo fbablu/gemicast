@@ -1,0 +1,8 @@
+#map {
+  height: 100vh;
+  width: 100%;
+}
+
+.info-window {
+  font-size: 14px;
+}

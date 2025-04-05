@@ -34,7 +34,6 @@ export class DashboardComponent {
   activeTab: string = 'home';
 
   tabs: Tab[] = [
-    { id: 'home', name: 'Home', icon: 'home' },
     { id: 'map', name: 'Map', icon: 'map' },
     { id: 'outages', name: 'Outages', icon: 'warning' },
     { id: 'predict', name: 'Predict', icon: 'auto_awesome' },
