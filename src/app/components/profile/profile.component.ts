@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc } from 'firebase/firestore';
+import { initializeApp } from '@firebase/app';
+import { getFirestore, collection, addDoc } from '@firebase/firestore';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 

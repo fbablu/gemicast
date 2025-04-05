@@ -38,7 +38,7 @@ export class DashboardComponent {
     { id: 'map', name: 'Map', icon: 'map' },
     { id: 'outages', name: 'Outages', icon: 'warning' },
     { id: 'predict', name: 'Predict', icon: 'auto_awesome' },
-    { id: 'profile', name: 'Profile', icon: 'profile' },
+    { id: 'profile', name: 'Profile', icon: 'person' },
   ];
 
   setActiveTab(tabId: string): void {
