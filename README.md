@@ -1,134 +1,155 @@
-# Gemicast: Predictive Power Outage Platform
+<h1 align="center">
+  <img src="./src/assets/gemicast-logo.png" alt="Icon" width="100"/>
+  <br>
+  <a>Gemicast</a> - <i>AI-Powered Outage Prediction Platform</i>
+</h1>
 
-Gemicast is a predictive dashboard that combines real-time weather data, historical outage patterns, and infrastructure information to forecast power disruptions before they occur, enabling proactive measures.
+<p align="center">
+  <a href="https://angular.io/" target="_blank"><img src="https://img.shields.io/badge/Angular-DD0031?style=for-the-badge&logo=angular&logoColor=white" alt="Angular"></a>
+  <a href="https://www.typescriptlang.org/" target="_blank"><img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript"></a>
+  <a href="https://tailwindcss.com/" target="_blank"><img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS"></a>
+  <a href="https://tensorflow.org/" target="_blank"><img src="https://img.shields.io/badge/TensorFlow-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white" alt="TensorFlow"></a>
+  <a href="https://ai.google.dev/" target="_blank"><img src="https://img.shields.io/badge/Gemini_AI-8E75B2?style=for-the-badge&logo=google&logoColor=white" alt="Gemini AI"></a>
+  <a href="https://cloud.google.com/" target="_blank"><img src="https://img.shields.io/badge/Google_Cloud-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white" alt="Google Cloud"></a>
+</p>
+
+<div align="center">
+  An intelligent power outage prediction platform that forecasts localized outages using weather data, machine learning, and historical patterns.
+</div>
+
+# Gemicast - Power Outage Prediction System
+
+Gemicast is an intelligent power outage prediction platform developed by students from Vanderbilt University. This project was created for the Google Developer Group Solutions Challenge, aiming to design a predictive system that accurately forecasts localized power outages using real-time weather, environmental, and historical data.
+
+## Motivation
+
+This project was motivated by real-world challenges as Vanderbilt Students living in Nashville, TN. During the week of March 30 - April 5, 2025, Nashville experienced severe weather conditions including tornado warnings, flash flooding, and severe thunderstorms, [leaving at least 5 dead and significant power disruptions across the region](https://www.tennessean.com/story/news/local/2025/04/03/tennessee-severe-weather-latest-nashville-updates-flooding-tornado/82789952007/). These events highlighted the critical need for proactive outage prediction systems to enhance community resilience.
 
 ## Features
 
-- **Real-time Weather Monitoring**: Integrates with weather APIs to provide current conditions and forecasts
-- **Predictive Analytics**: Uses machine learning models to predict power outages based on weather and infrastructure data
-- **Interactive Map View**: Color-coded visualization of risk zones and current outages
-- **Alert System**: Three-tiered notification system (warning, watch, advisory)
-- **Power Status Tracking**: Real-time outage tracking with estimated restoration times
-- **Community Reporting**: Crowdsourced incident reporting for faster response
+The application provides a comprehensive dashboard with multiple components:
 
-## Technology Stack
+### Home
+
+- Main statistical overview
+- Current location tracking (utilizing Google Geolocator/Maps API)
+- Outage Risk Score (from prediction model)
+- Interactive graphs showing outage risk over time
+- Weather risk assessment
+
+### Map
+
+- Detailed visualization of outage areas
+- Community-driven reporting system (similar to Waze)
+- Interactive map interface
+- Real-time outage monitoring
+
+### Outages
+
+- County-specific outage risk assessment
+- Historical outage data visualization
+- Risk factor analysis
+- Weather condition integration
+- Actionable recommendations based on risk levels
+
+### Predict
+
+- AI-powered insights (using Gemini API)
+- Google Calendar integration for event planning
+- Schedule analysis for outage risk
+- Event planning assistance
+- Weather and outage-related Q&A
+
+## Tech Stack
 
 - **Frontend**: Angular 19
-- **Backend**: Google Cloud Functions, Firebase for real-time updates
-- **Data Processing**: TensorFlow for predictive modeling, BigQuery for data storage
-- **APIs**: Google Maps Platform, Weather data (OpenWeatherMap/NOAA)
-- **ML Components**: Google Gemini API for natural language alerts, TensorFlow for prediction models
-- **DevOps**: Google Cloud Build, Container Registry
-- **Monitoring**: Google Cloud Monitoring, Firebase Analytics
+- **Models**: TensorFlow Decision Forests for outage prediction
+- **AI Integration**: Google Gemini API
+- **APIs**:
+  - NOAA Weather API
+  - Google Maps API
+  - Google Calendar API
+- **Data Sources**:
+  - NOAA Weather Data
+  - Oak Ridge Eagle-I Power Outage Data (2014-2022)
+  - Event-correlated Eagle-I power outages (2014-2023)
+  - Tennessee county data
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18.x or higher
-- Angular CLI 19.x
-- Firebase CLI (for deployment)
+- Node.js v18.19.1
+- Angular CLI v19.2.5
+- Google Cloud account for API access
 
 ### Installation
 
 1. Clone the repository:
 
-   ```bash
-   git clone https://github.com/your-org/Gemicast.git
-   cd Gemicast
-   ```
+```bash
+git clone https://github.com/yourusername/gemicast.git
+cd gemicast
+```
 
 2. Install dependencies:
 
-   ```bash
-   npm install
-   ```
+```bash
+npm install
+```
 
 3. Set up environment variables:
-   ```bash
-   cp .env.example .env
-   # Edit .env with your API keys and configuration
-   ```
+   Create a `.env` file based on the `.env.example` file.
 
-### Running the Application
-
-Start the development server:
+4. Start the development server:
 
 ```bash
-npm start
+ng serve
 ```
 
-The application will be available at http://localhost:4200/
+5. Open your browser and navigate to `http://localhost:4200/`
 
-### Building for Production
+### Using nvm (Node Version Manager)
+
+If you encounter compatibility issues, ensure you're using the correct Node.js version:
 
 ```bash
-npm run build
+# Check Angular CLI compatibility with your Node version
+ng version
+
+# Install and use the recommended Node version
+nvm install v18.19.1
+nvm use v18.19.1
 ```
 
-The build artifacts will be stored in the `dist/` directory.
+## Data Sources
 
-## Development
+1. NOAA Weather Data: https://weather-gov.github.io/api/general-faqs
+2. Oak Ridge Eagle-I Power Outage Data (2014-2022): https://doi.ccs.ornl.gov/dataset/ccec86f0-e144-5de8-aee0-fb26028b26e1
+3. Cleaned Event-correlated Eagle-I power Outages (2014-2023): https://data.openei.org/submissions/6458
+4. (FUTURE IMPLEMENTATION) Google Weather API: https://developers.google.com/maps/environment
 
-### Code Scaffolding
+## Cloud Resources
 
-Run `ng generate component component-name` to generate a new component.
+The application is designed to work with the following Google Cloud resources:
 
-You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+- Vertex AI platform
+- Compute Engine VMs
+- BigQuery
+- Cloud Run
+- Firebase and Firestore for notifications
 
-### Running Tests
+## Project Status
 
-To run the unit tests:
+This project is currently in development. The frontend components are implemented with placeholder functionality, and we've included the TensorFlow Decision Forest model under `src/app/prediction` for viewing and access. The data on the outages portion is a mixture of outputs from the model and placholder data.
 
-```bash
-npm test
-```
+## Future Work
 
-For end-to-end tests:
-
-```bash
-npm run e2e
-```
-
-## Deployment
-
-This project is configured for deployment to Google Cloud Platform with Firebase Hosting.
-
-1. Build the project for production:
-
-   ```bash
-   npm run build
-   ```
-
-2. Deploy to Firebase:
-   ```bash
-   firebase deploy
-   ```
-
-## Project Structure
-
-```
-project-root/
-├─ .github/workflows/         # GitHub workflows
-├─ public/                    # Static assets
-│  └─ images/                 # Image assets
-├─ src/
-│  ├─ app/
-│  │  ├─ core/                # Core module
-│  │  │  └─ components/       # Header, sidenav, etc.
-│  │  ├─ features/            # Feature modules
-│  │  ├─ shared/              # Shared components
-│  │  └─ services/            # Application services
-│  └─ assets/                 # Other assets
-```
-
-## Machine Learning Integration
-
-The Gemicast platform leverages several ML models to provide accurate outage predictions:
-
-- **TensorFlow / TensorFlow.js**: For in-browser prediction capabilities
-- **Google Gemini API**: Used for natural language alert generation and insights
-- **Keras**: Implements time-series forecasting of outage probability
+- Implement real-time data pipelines with an API connection to the model
+- Enhance model accuracy with additional features
+- Deploy the application to Google Cloud
+- Add mobile notifications for outage warnings
+- Expand coverage to more counties and states
 
 ## License
 
