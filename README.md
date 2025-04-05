@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img src="./src/assets/gemicast-logo.png" alt="Icon" width="100"/>
+  <img src="./src/images/gemini.png" alt="Icon" width="100"/>
   <br>
   <a>Gemicast</a> - <i>AI-Powered Outage Prediction Platform</i>
 </h1>
