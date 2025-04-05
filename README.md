@@ -109,6 +109,13 @@ ng serve
 
 5. Open your browser and navigate to `http://localhost:4200/`
 
+
+6. To run tests, enter the command:
+
+```bash
+ng test
+```
+
 ### Using nvm (Node Version Manager)
 
 If you encounter compatibility issues, ensure you're using the correct Node.js version:
@@ -121,6 +128,7 @@ ng version
 nvm install v18.19.1
 nvm use v18.19.1
 ```
+
 
 ## Data Sources
 
