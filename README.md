@@ -74,7 +74,6 @@ The application provides a comprehensive dashboard with multiple components:
   - [Oak Ridge Eagle-I Power Outage Data (2014-2022)](https://doi.ccs.ornl.gov/dataset/ccec86f0-e144-5de8-aee0-fb26028b26e1)
   - [Event-correlated Eagle-I power outages (2014-2023)](https://data.openei.org/submissions/6458)
 
-
 ## Getting Started
 
 ### Prerequisites
@@ -108,7 +107,6 @@ ng serve
 ```
 
 5. Open your browser and navigate to `http://localhost:4200/`
-
 
 6. To run tests, enter the command:
 
