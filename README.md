@@ -1,7 +1,7 @@
 <h1 align="center">
   <img src="./src/images/gemini.png" alt="Icon" width="100"/>
   <br>
-  <a>Gemicast</a> - <i>AI-Powered Outage Prediction Platform</i>
+  <a>Gemicast</a> - <i>AI-Powered Outage Prediction Dashboard</i>
 </h1>
 
 <p align="center">
@@ -13,11 +13,12 @@
   <a href="https://cloud.google.com/" target="_blank"><img src="https://img.shields.io/badge/Google_Cloud-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white" alt="Google Cloud"></a>
 </p>
 
-<div align="center">
-  An intelligent power outage prediction platform that forecasts localized outages using weather data, machine learning, and historical patterns.
-</div>
+<h1 align="center">
+  <img src="./src/images/predict_tab.png" alt="Icon" width="800"/>
+  <br>
+</h1>
 
-# Gemicast - Power Outage Prediction System
+
 
 Gemicast is an intelligent power outage prediction platform developed by students from Vanderbilt University. This project was created for the Google Developer Group Solutions Challenge, aiming to design a predictive system that accurately forecasts localized power outages using real-time weather, environmental, and historical data.
 
