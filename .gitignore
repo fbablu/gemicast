@@ -45,5 +45,5 @@ Thumbs.db
 
 # Python files
 src/app/prediction/models/*
-
+models/venv/*
 .env
