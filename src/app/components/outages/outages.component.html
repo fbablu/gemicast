@@ -1,9 +1,336 @@
-<!-- src/app/components/outages/outages.component.html -->
-<!-- Outages view template displaying power disruption information -->
+<div class="outages-container">
+  <div class="header-section">
+    <h1>County Outage Risk Dashboard</h1>
+    <p class="subtitle">
+      View historical power outage risk for your county in Tennessee
+    </p>
+  </div>
 
-<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-  <h2 class="text-xl font-semibold mb-4">Outages</h2>
-  <p class="text-gray-600 dark:text-gray-300">
-    Current and historical power outage information.
-  </p>
+  <div class="content-container">
+    <div class="prediction-form-card">
+      <h2>Find Your County's Risk</h2>
+      <form [formGroup]="predictionForm" novalidate>
+        <!-- Dropdown Selection -->
+        <div class="form-group">
+          <label for="county-select">Select County</label>
+          <div class="select-wrapper">
+            <select
+              id="county-select"
+              formControlName="county"
+              class="form-control"
+              (change)="onSubmit()"
+            >
+              <option [ngValue]="null" disabled>-- Select a County --</option>
+              <option *ngFor="let county of counties" [value]="county">
+                {{ county }}
+              </option>
+            </select>
+            <!-- Add validation message display if needed -->
+            <!-- <div *ngIf="predictionForm.get('county')?.invalid && predictionForm.get('county')?.touched">County is required.</div> -->
+          </div>
+        </div>
+
+        <!-- Search Input -->
+        <div class="form-group county-search">
+          <label for="county-search-input">Or Search County</label>
+          <input
+            id="county-search-input"
+            type="text"
+            placeholder="Type to search..."
+            [formControl]="searchControl"
+            class="search-input"
+          />
+          <div
+            class="county-suggestions"
+            *ngIf="filteredCounties.length > 0 && searchControl.value"
+          >
+            <div
+              class="suggestion-item"
+              *ngFor="let county of filteredCounties"
+              (click)="selectCounty(county)"
+            >
+              {{ county }}
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="results-info-container">
+      <!-- Results Card -->
+      <div class="results-card" *ngIf="selectedCounty">
+        <h2>{{ selectedCounty }} County Outage Risk</h2>
+
+        <div class="risk-score-container">
+          <div class="current-risk">
+            <div
+              class="risk-indicator"
+              [ngStyle]="{ 'background-color': getColorForScore(latestScore) }"
+            >
+              <div class="indicator-value">{{ latestScore.toFixed(1) }}</div>
+              <div class="indicator-label">Latest Score</div>
+            </div>
+            <div class="risk-description">
+              <p *ngIf="calculateRiskLevel(latestScore) === 'Very High'">
+                <strong>Very High Risk:</strong> {{ selectedCounty }} shows a
+                very high outage risk. Significant preparation is strongly
+                advised, especially during adverse weather.
+              </p>
+              <p *ngIf="calculateRiskLevel(latestScore) === 'High'">
+                <strong>High Risk:</strong> {{ selectedCounty }} has a high
+                outage risk. Prepare for potential outages and have emergency
+                supplies ready.
+              </p>
+              <p *ngIf="calculateRiskLevel(latestScore) === 'Moderate'">
+                <strong>Moderate Risk:</strong> {{ selectedCounty }} shows
+                moderate outage risk. Basic preparedness is recommended.
+              </p>
+              <p *ngIf="calculateRiskLevel(latestScore) === 'Low'">
+                <strong>Low Risk:</strong> {{ selectedCounty }} has a lower
+                outage risk score, but staying prepared for unexpected events is
+                always wise.
+              </p>
+              <p *ngIf="calculateRiskLevel(latestScore) === 'Very Low'">
+                <strong>Very Low Risk:</strong> {{ selectedCounty }} currently
+                shows a very low historical risk, but vigilance during storms is
+                still important.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Historical Data -->
+        <div
+          class="historical-data"
+          *ngIf="selectedCountyData && selectedCountyData.length > 0"
+        >
+          <h3>Historical Outage Risk Trends</h3>
+          <div class="trend-chart">
+            <div class="chart-bars">
+              <div class="bar-item" *ngFor="let item of selectedCountyData">
+                <div
+                  class="bar"
+                  [ngStyle]="{
+                    height: getBarHeight(item.score) + '%',
+                    'background-color': getColorForScore(item.score),
+                  }"
+                >
+                  <div class="bar-value">{{ item.score.toFixed(1) }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="chart-labels">
+              <div class="year-labels">
+                <span
+                  class="year-label-item"
+                  *ngFor="let item of selectedCountyData"
+                  >{{ item.year }}</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="!selectedCountyData || selectedCountyData.length === 0">
+          <p>
+            No historical data points available to display a trend chart for
+            {{ selectedCounty }}.
+          </p>
+        </div>
+
+        <!-- County-specific insights -->
+        <div class="county-insights">
+          <h3>Analysis & Conditions</h3>
+          <div class="insight-content">
+            <p class="insight-text">
+              <strong>Insight:</strong> {{ countyInsight }}
+            </p>
+
+            <div class="weather-info">
+              <h4>Current Conditions</h4>
+              <div class="weather-data">
+                <div class="weather-item">
+                  <span class="weather-icon">🌡️</span>
+                  <span class="weather-label">Temp</span>
+                  <span class="weather-value"
+                    >{{ currentWeather.temperature }}°F</span
+                  >
+                </div>
+                <div class="weather-item">
+                  <span class="weather-icon">💨</span>
+                  <span class="weather-label">Wind</span>
+                  <span class="weather-value"
+                    >{{ currentWeather.windSpeed }} mph</span
+                  >
+                </div>
+                <div class="weather-item">
+                  <span class="weather-icon">💧</span>
+                  <span class="weather-label">Precip</span>
+                  <span class="weather-value">{{
+                    currentWeather.precipitation > 0
+                      ? currentWeather.precipitation + " in"
+                      : "None"
+                  }}</span>
+                  <!-- Example unit -->
+                </div>
+              </div>
+              <p class="weather-alert" *ngIf="weatherAlert">
+                <span class="alert-icon">⚠️</span> {{ weatherAlert }}
+              </p>
+            </div>
+
+            <div
+              class="recommendation-box"
+              *ngIf="recommendations && recommendations.length > 0"
+            >
+              <h4>Recommendations</h4>
+              <ul class="recommendations">
+                <li *ngFor="let rec of recommendations">{{ rec }}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fallback Message -->
+      <div class="results-card placeholder-card" *ngIf="!selectedCounty">
+        <h2>Select a County</h2>
+        <p>
+          Please select or search for a county above to view its outage risk
+          information.
+        </p>
+      </div>
+
+      <!-- Coverage Information Card (Assumed static or from another source) -->
+      <div class="coverage-info-card">
+        <h2>Tennessee Outage Coverage</h2>
+        <div class="coverage-stats">
+          <div class="coverage-year">
+            <div class="year-label">2022</div>
+            <div class="stats-container">
+              <div class="coverage-stat">
+                <div class="stat-value">3.43M</div>
+                <div class="stat-label">Total Customers</div>
+              </div>
+              <div class="coverage-stat">
+                <div class="stat-value">2.58M</div>
+                <div class="stat-label">Covered Customers</div>
+              </div>
+              <div class="coverage-stat">
+                <div class="stat-value">75%</div>
+                <div class="stat-label">Coverage Rate</div>
+              </div>
+            </div>
+          </div>
+          <div class="coverage-trend">
+            <h3>Historical Coverage Trend</h3>
+            <div class="trend-data">
+              <div class="trend-item">
+                <div class="trend-year">2018</div>
+                <div class="trend-bar">
+                  <div class="bar-fill" style="width: 55%">55%</div>
+                </div>
+              </div>
+              <div class="trend-item">
+                <div class="trend-year">2019</div>
+                <div class="trend-bar">
+                  <div class="bar-fill" style="width: 73%">73%</div>
+                </div>
+              </div>
+              <div class="trend-item">
+                <div class="trend-year">2020</div>
+                <div class="trend-bar">
+                  <div class="bar-fill" style="width: 73%">73%</div>
+                </div>
+              </div>
+              <div class="trend-item">
+                <div class="trend-year">2021</div>
+                <div class="trend-bar">
+                  <div class="bar-fill" style="width: 73%">73%</div>
+                </div>
+              </div>
+              <div class="trend-item">
+                <div class="trend-year">2022</div>
+                <div class="trend-bar">
+                  <div class="bar-fill" style="width: 75%">75%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- State Summary (Assumed static or from another source) -->
+  <div class="state-summary">
+    <h2>Tennessee Outage Trends</h2>
+    <div class="yearly-summary">
+      <div class="yearly-chart">
+        <div class="chart-title">Normalized Outage Metrics (2014-2022)</div>
+        <div class="metric-lines">
+          <div class="line-labels">
+            <div class="line-label">
+              <span class="color-dot outage-count"></span
+              ><span>Outage Count</span>
+            </div>
+            <div class="line-label">
+              <span class="color-dot max-duration"></span
+              ><span>Max Duration</span>
+            </div>
+            <div class="line-label">
+              <span class="color-dot customer-hours"></span
+              ><span>Customer Hours</span>
+            </div>
+          </div>
+          <div class="chart-area">
+            <svg
+              width="100%"
+              height="200"
+              viewBox="0 0 900 200"
+              preserveAspectRatio="none"
+            >
+              <polyline
+                points="0,200 100,146 200,134 300,120 400,107 500,72 600,42 700,39 800,0"
+                fill="none"
+                stroke="#3f51b5"
+                stroke-width="3"
+              />
+              <polyline
+                points="0,200 100,132 200,70 300,52 400,126 500,117 600,40 700,93 800,0"
+                fill="none"
+                stroke="#ff4081"
+                stroke-width="3"
+              />
+              <polyline
+                points="0,200 100,165 200,161 300,88 400,163 500,150 600,60 700,129 800,0"
+                fill="none"
+                stroke="#4caf50"
+                stroke-width="3"
+              />
+            </svg>
+            <div class="year-markers">
+              <span>2014</span><span>2015</span><span>2016</span
+              ><span>2017</span><span>2018</span><span>2019</span
+              ><span>2020</span><span>2021</span><span>2022</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="trend-insights">
+        <p>
+          Tennessee has experienced a steady increase in power outage events
+          from 2014 to 2022, with significant jumps in 2019-2020 and 2021-2022.
+          Overall normalized outage count has increased significantly.
+        </p>
+        <p>
+          Maximum outage duration and customer impact (customer-weighted hours)
+          both peaked in 2022, indicating more severe events.
+        </p>
+        <p>
+          Key counties with historically high outage risk include Shelby, Obion,
+          Monroe, Jefferson, and Blount, though risk can vary year to year.
+        </p>
+      </div>
+    </div>
+  </div>
 </div>
