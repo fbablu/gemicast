@@ -129,17 +129,9 @@ nvm install v18.19.1
 nvm use v18.19.1
 ```
 
-
-## Data Sources
-
-1. NOAA Weather Data: https://weather-gov.github.io/api/general-faqs
-2. Oak Ridge Eagle-I Power Outage Data (2014-2022): https://doi.ccs.ornl.gov/dataset/ccec86f0-e144-5de8-aee0-fb26028b26e1
-3. Cleaned Event-correlated Eagle-I power Outages (2014-2023): https://data.openei.org/submissions/6458
-4. (FUTURE IMPLEMENTATION) Google Weather API: https://developers.google.com/maps/environment
-
 ## Cloud Resources
 
-The application is designed to work with the following Google Cloud resources:
+Athough we didn't use any cloud resources for this iteration, the solution will be using the following Google Cloud resources:
 
 - Vertex AI platform
 - Compute Engine VMs
