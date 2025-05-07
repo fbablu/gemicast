@@ -250,6 +250,8 @@ def process_merged_data(merged_df):
     """Process and enhance the merged outage data"""
     if merged_df.empty:
         return merged_df
+    
+        
 
     # Create processed dataframe
     processed_df = merged_df.copy()

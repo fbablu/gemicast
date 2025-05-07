@@ -18,8 +18,6 @@
   <br>
 </h1>
 
-
-
 Gemicast is an intelligent power outage prediction platform developed by students from Vanderbilt University. This project was created for the Google Developer Group Solutions Challenge, aiming to design a predictive system that accurately forecasts localized power outages using real-time weather, environmental, and historical data.
 
 ## Motivation
