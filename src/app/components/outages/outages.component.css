@@ -693,3 +693,66 @@ label {
   font-style: italic;
   margin-top: 1rem;
 }
+
+/* Refresh button */
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.refresh-button {
+    color: var(--primary-color);
+}
+
+/* Tennessee Map SVG styles */
+.tennessee-map-container {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+.tennessee-map-container h3 {
+  font-size: 1.1rem;
+  color: var(--primary-darker);
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+.tennessee-map {
+  width: 100%;
+  height: auto;
+  max-height: 200px; /* Adjust as needed */
+}
+.tn-outline {
+  fill: #e0f2f7; /* Light blue for TN shape */
+  stroke: #b0bec5; /* Grey border */
+  stroke-width: 1;
+}
+.county-group {
+  cursor: pointer;
+}
+.county-shape {
+  fill: #c5cae9; /* Default county color */
+  stroke: #7986cb;
+  stroke-width: 0.5;
+  transition: fill 0.2s ease-in-out;
+}
+.county-group:hover .county-shape {
+  fill: #9fa8da; /* Hover color */
+}
+.county-group.selected .county-shape {
+  fill: var(--primary-color); /* Selected color */
+  stroke: var(--primary-darker);
+  stroke-width: 1;
+}
+.county-label {
+  font-size: 8px; /* Adjust for visibility */
+  fill: #333;
+  text-anchor: middle;
+  pointer-events: none; /* So click goes to the group */
+}
+.county-group.selected .county-label {
+  fill: white;
+  font-weight: bold;
+}

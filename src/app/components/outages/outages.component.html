@@ -2,7 +2,7 @@
   <div class="header-section">
     <h1>County Outage Risk Dashboard</h1>
     <p class="subtitle">
-      View historical power outage risk for your county in Tennessee
+      View historical and predicted power outage risk for your county in Tennessee
     </p>
   </div>
 
@@ -36,7 +36,7 @@
             type="text"
             placeholder="Type to search..."
             [formControl]="searchControl"
-            class="search-input"
+            class="search-input form-control" 
           />
           <div
             class="county-suggestions"
@@ -52,12 +52,43 @@
           </div>
         </div>
       </form>
+
+      <!-- Simplified Tennessee Map -->
+      <div class="tennessee-map-container">
+        <h3>Select County on Map (Simplified)</h3>
+        <svg viewBox="0 0 250 150" class="tennessee-map">
+          <!-- Outline of TN (very abstract) -->
+          <polygon points="5,5 245,5 230,145 10,145" class="tn-outline"/>
+          
+          <g *ngFor="let county of mapCounties" 
+             (click)="selectCounty(county.name)" 
+             [class.selected]="selectedCounty === county.name"
+             class="county-group">
+            <rect [attr.x]="county.x" [attr.y]="county.y" 
+                  [attr.width]="county.width" [attr.height]="county.height" 
+                  class="county-shape" />
+            <text [attr.x]="county.x + county.width / 2" 
+                  [attr.y]="county.y + county.height / 2 + 4" 
+                  class="county-label">
+              {{ county.name.substring(0,3) }}..
+            </text>
+          </g>
+        </svg>
+      </div>
+
+
     </div>
 
     <div class="results-info-container">
       <!-- Results Card -->
       <div class="results-card" *ngIf="selectedCounty">
-        <h2>{{ selectedCounty }} County Outage Risk</h2>
+        <div class="results-header">
+            <h2>{{ selectedCounty }} County Outage Risk</h2>
+            <button mat-icon-button (click)="refreshData()" [disabled]="weatherDataLoading" class="refresh-button" title="Refresh Data">
+                <mat-icon>refresh</mat-icon>
+            </button>
+        </div>
+
 
         <!-- Last Updated Info -->
         <div class="last-updated-container">
@@ -79,7 +110,7 @@
               [ngStyle]="{ 'background-color': getColorForScore(latestScore) }"
             >
               <div class="indicator-value">{{ latestScore.toFixed(1) }}</div>
-              <div class="indicator-label">Latest Score</div>
+              <div class="indicator-label">Risk Score</div>
             </div>
             <div class="risk-description">
               <p *ngIf="calculateRiskLevel(latestScore) === 'Very High'">
@@ -103,7 +134,7 @@
               </p>
               <p *ngIf="calculateRiskLevel(latestScore) === 'Very Low'">
                 <strong>Very Low Risk:</strong> {{ selectedCounty }} currently
-                shows a very low historical risk, but vigilance during storms is
+                shows a very low risk, but vigilance during storms is
                 still important.
               </p>
             </div>
@@ -141,7 +172,7 @@
             </div>
           </div>
         </div>
-        <div *ngIf="!selectedCountyData || selectedCountyData.length === 0">
+        <div *ngIf="selectedCounty && (!selectedCountyData || selectedCountyData.length === 0)">
           <p>
             No historical data points available to display a trend chart for
             {{ selectedCounty }}.
@@ -211,7 +242,7 @@
       <div class="results-card placeholder-card" *ngIf="!selectedCounty">
         <h2>Select a County</h2>
         <p>
-          Please select or search for a county above to view its outage risk
+          Please select or search for a county above, or click on the map, to view its outage risk
           information.
         </p>
       </div>
