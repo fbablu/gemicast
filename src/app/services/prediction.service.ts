@@ -39,15 +39,14 @@ export interface PredictionResult {
 }
 
 export interface CountyRanking {
-    county: string;
-    probability: number;
+  county: string;
+  probability: number;
 }
 
 export interface RankingsResponse {
-    high_risk: CountyRanking[];
-    low_risk: CountyRanking[];
+  high_risk: CountyRanking[];
+  low_risk: CountyRanking[];
 }
-
 
 @Injectable({
   providedIn: 'root',
@@ -81,7 +80,9 @@ export class PredictionService {
 
   getCurrentWeather(county: string): Observable<WeatherData> {
     return this.http
-      .get<WeatherData>(`${this.apiUrl}/weather?county=${encodeURIComponent(county)}`)
+      .get<WeatherData>(
+        `${this.apiUrl}/weather?county=${encodeURIComponent(county)}`,
+      )
       .pipe(
         tap((data) => console.log(`Weather data for ${county}:`, data)),
         catchError((error) => {
@@ -94,15 +95,14 @@ export class PredictionService {
   }
 
   getCountyRankings(): Observable<RankingsResponse> {
-    return this.http.get<RankingsResponse>(`${this.apiUrl}/rankings`)
-      .pipe(
-        tap((data) => console.log('County rankings data:', data)),
-        catchError((error) => {
-          console.error('Error fetching county rankings:', error);
-          // Provide a fallback empty or mock ranking
-          return of({ high_risk: [], low_risk: [] });
-        })
-      );
+    return this.http.get<RankingsResponse>(`${this.apiUrl}/rankings`).pipe(
+      tap((data) => console.log('County rankings data:', data)),
+      catchError((error) => {
+        console.error('Error fetching county rankings:', error);
+        // Provide a fallback empty or mock ranking
+        return of({ high_risk: [], low_risk: [] });
+      }),
+    );
   }
 
   private generateSyntheticWeather(county: string): WeatherData {
@@ -120,7 +120,7 @@ export class PredictionService {
       county: county,
       lastUpdated: now.toISOString(),
       weatherDescription: 'SYNTHETIC WEATHER (SERVICE FALLBACK)',
-      month: now.getMonth() +1,
+      month: now.getMonth() + 1,
       dayOfWeek: now.getDay(),
       hour: now.getHours(),
       mixingHeight: 500,
@@ -132,29 +132,57 @@ export class PredictionService {
     const windRisk = (data.windGust ?? 0) > 30 || (data.windSpeed ?? 0) > 25;
     const precipRisk = (data.precipitationChance ?? 0) > 70;
     let probability = 0.1; // Base
-    if ((data.windGust ?? 0) > 40) probability += 0.3; else if ((data.windGust ?? 0) > 30) probability += 0.15;
-    if ((data.windSpeed ?? 0) > 30) probability += 0.2; else if ((data.windSpeed ?? 0) > 20) probability += 0.1;
-    if ((data.precipitationChance ?? 0) > 80) probability += 0.15; else if ((data.precipitationChance ?? 0) > 60) probability += 0.05;
+    if ((data.windGust ?? 0) > 40) probability += 0.3;
+    else if ((data.windGust ?? 0) > 30) probability += 0.15;
+    if ((data.windSpeed ?? 0) > 30) probability += 0.2;
+    else if ((data.windSpeed ?? 0) > 20) probability += 0.1;
+    if ((data.precipitationChance ?? 0) > 80) probability += 0.15;
+    else if ((data.precipitationChance ?? 0) > 60) probability += 0.05;
     probability = Math.min(probability, 0.95);
 
-    const duration = windRisk ? 1 + (data.windGust ?? 0) / 15 : 0.5 + (data.precipitationChance ?? 0) / 150;
+    const duration = windRisk
+      ? 1 + (data.windGust ?? 0) / 15
+      : 0.5 + (data.precipitationChance ?? 0) / 150;
     const riskFactors: RiskFactor[] = [];
-    if ((data.windGust ?? 0) > 30) riskFactors.push({ factor: 'High Wind Gusts', value: `${data.windGust} mph`, severity: (data.windGust ?? 0) > 40 ? 'high' : 'medium' });
-    if ((data.windSpeed ?? 0) > 20) riskFactors.push({ factor: 'Sustained Wind', value: `${data.windSpeed} mph`, severity: (data.windSpeed ?? 0) > 30 ? 'high' : 'medium' });
-    if ((data.precipitationChance ?? 0) > 60) riskFactors.push({ factor: 'Precipitation Risk', value: `${data.precipitationChance}%`, severity: (data.precipitationChance ?? 0) > 80 ? 'high' : 'medium' });
+    if ((data.windGust ?? 0) > 30)
+      riskFactors.push({
+        factor: 'High Wind Gusts',
+        value: `${data.windGust} mph`,
+        severity: (data.windGust ?? 0) > 40 ? 'high' : 'medium',
+      });
+    if ((data.windSpeed ?? 0) > 20)
+      riskFactors.push({
+        factor: 'Sustained Wind',
+        value: `${data.windSpeed} mph`,
+        severity: (data.windSpeed ?? 0) > 30 ? 'high' : 'medium',
+      });
+    if ((data.precipitationChance ?? 0) > 60)
+      riskFactors.push({
+        factor: 'Precipitation Risk',
+        value: `${data.precipitationChance}%`,
+        severity: (data.precipitationChance ?? 0) > 80 ? 'high' : 'medium',
+      });
 
     let recommendation = '';
-    if (probability > 0.6) recommendation = 'High risk of power outages. Implement emergency protocols.';
-    else if (probability > 0.3) recommendation = 'Moderate risk of power disruptions. Have backup plans ready.';
+    if (probability > 0.6)
+      recommendation =
+        'High risk of power outages. Implement emergency protocols.';
+    else if (probability > 0.3)
+      recommendation =
+        'Moderate risk of power disruptions. Have backup plans ready.';
     else recommendation = 'Low risk of outages. Monitor weather conditions.';
-    
+
     return {
-      outage_likely: probability > 0.5, probability: probability, estimated_duration: roundToFirstDecimal(duration),
-      recommendation: recommendation, risk_factors: riskFactors, lastUpdated: new Date().toISOString(),
+      outage_likely: probability > 0.5,
+      probability: probability,
+      estimated_duration: roundToFirstDecimal(duration),
+      recommendation: recommendation,
+      risk_factors: riskFactors,
+      lastUpdated: new Date().toISOString(),
     };
   }
 }
 
 function roundToFirstDecimal(num: number): number {
-    return Math.round(num * 10) / 10;
+  return Math.round(num * 10) / 10;
 }

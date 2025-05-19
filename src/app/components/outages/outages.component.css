@@ -696,13 +696,13 @@ label {
 
 /* Refresh button */
 .results-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .refresh-button {
-    color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 /* Tennessee Map SVG styles */
@@ -816,13 +816,13 @@ label {
 }
 
 .placeholder-text {
-    text-align: center;
-    color: #777;
-    margin-top: 1rem;
+  text-align: center;
+  color: #777;
+  margin-top: 1rem;
 }
 
 /* Ensure spinner in button is aligned */
 .rankings-section button mat-spinner {
-    display: inline-block;
-    vertical-align: middle;
+  display: inline-block;
+  vertical-align: middle;
 }
