@@ -705,8 +705,18 @@ def prepare_features_with_weather(combined_df):
     X = X.fillna(0)
     # Then explicitly convert to appropriate types
     X = X.infer_objects(copy=False)  # Address the pandas FutureWarning
+    
+    if not X.empty:
+        combined_df = X.copy()
+        combined_df['outage_occurred'] = y
+        combined_df.to_csv('bigquery_training_data.csv', index=False)
+        print(f"Exported {len(combined_df)} records to bigquery_training_data.csv")
 
     return X, y
+
+
+
+
 
 def build_and_train_model(X, y, test_size=0.2, validation_size=0.25):
     """
@@ -988,6 +998,14 @@ def main(start_date='2022-01-01', end_date='2022-12-31'):
         print("Preparing features for modeling...")
         X, y = prepare_features_with_weather(combined_df)
         print(f"Prepared features: {X.shape[0]} samples, {X.shape[1]} features")
+            
+        if not X.empty:
+            bigquery_df = X.copy()
+            bigquery_df['outage_occurred'] = y
+            bigquery_df.to_csv('bigquery_final_data.csv', index=False)
+            print(f"Exported final dataset with {len(bigquery_df)} records to bigquery_final_data.csv")
+            
+            
 
         # 9. Build and train model
         print("Building and training model...")
@@ -1054,7 +1072,5 @@ def main(start_date='2022-01-01', end_date='2022-12-31'):
         results['errors'].append(f"Main execution error: {e}")
 
     return results['model'], results
-
-
-
+    
 main()

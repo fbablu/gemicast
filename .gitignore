@@ -42,8 +42,9 @@ testem.log
 .DS_Store
 Thumbs.db
 
-
 # Python files
 src/app/prediction/models/*
-models/venv/*
+src/app/prediction/__pycache__/
+venv/
+
 .env
