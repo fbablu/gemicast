@@ -6,6 +6,40 @@
     </p>
   </div>
 
+  <!-- County Rankings Section -->
+  <div class="rankings-section results-card">
+    <div class="results-header">
+      <h2>Statewide Risk Rankings</h2>
+      <button mat-stroked-button color="primary" (click)="fetchCountyRankings()" [disabled]="isFetchingRankings">
+        <mat-icon *ngIf="!isFetchingRankings">leaderboard</mat-icon>
+        <mat-spinner *ngIf="isFetchingRankings" diameter="20" style="margin-right: 8px;"></mat-spinner>
+        {{ isFetchingRankings ? 'Loading Rankings...' : 'Load Statewide Rankings' }}
+      </button>
+    </div>
+    <div *ngIf="!isFetchingRankings && (topHighRiskCounties.length > 0 || topLowRiskCounties.length > 0)" class="rankings-display">
+      <div class="ranking-list">
+        <h3>Top 5 High Risk Counties</h3>
+        <ul>
+          <li *ngFor="let item of topHighRiskCounties">
+            {{ item.county }}: <span class="risk-value high-risk">{{ (item.probability * 100).toFixed(1) }}%</span>
+          </li>
+        </ul>
+      </div>
+      <div class="ranking-list">
+        <h3>Top 5 Low Risk Counties</h3>
+        <ul>
+          <li *ngFor="let item of topLowRiskCounties">
+            {{ item.county }}: <span class="risk-value low-risk">{{ (item.probability * 100).toFixed(1) }}%</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <p *ngIf="!isFetchingRankings && topHighRiskCounties.length === 0 && topLowRiskCounties.length === 0 && !isFetchingRankings" class="placeholder-text">
+      Click "Load Statewide Rankings" to see the top high and low risk counties.
+    </p>
+  </div>
+
+
   <div class="content-container">
     <div class="prediction-form-card">
       <h2>Find Your County's Risk</h2>
@@ -57,7 +91,6 @@
       <div class="tennessee-map-container">
         <h3>Select County on Map (Simplified)</h3>
         <svg viewBox="0 0 250 150" class="tennessee-map">
-          <!-- Outline of TN (very abstract) -->
           <polygon points="5,5 245,5 230,145 10,145" class="tn-outline"/>
           
           <g *ngFor="let county of mapCounties" 
@@ -98,7 +131,7 @@
               formatDateTime(lastUpdated)
             }}</span>
             <span *ngIf="weatherDataLoading" class="loading-indicator">
-              <span class="loading-spinner"></span> Updating...
+              <span [class.bind]="'loading-spinner'"></span> Updating...
             </span>
           </p>
         </div>
@@ -116,12 +149,11 @@
               <p *ngIf="calculateRiskLevel(latestScore) === 'Very High'">
                 <strong>Very High Risk:</strong> {{ selectedCounty }} shows a
                 very high outage risk. Significant preparation is strongly
-                advised, especially during adverse weather.
+                advised.
               </p>
               <p *ngIf="calculateRiskLevel(latestScore) === 'High'">
                 <strong>High Risk:</strong> {{ selectedCounty }} has a high
-                outage risk. Prepare for potential outages and have emergency
-                supplies ready.
+                outage risk. Prepare for potential outages.
               </p>
               <p *ngIf="calculateRiskLevel(latestScore) === 'Moderate'">
                 <strong>Moderate Risk:</strong> {{ selectedCounty }} shows
@@ -129,13 +161,11 @@
               </p>
               <p *ngIf="calculateRiskLevel(latestScore) === 'Low'">
                 <strong>Low Risk:</strong> {{ selectedCounty }} has a lower
-                outage risk score, but staying prepared for unexpected events is
-                always wise.
+                outage risk. Staying prepared is wise.
               </p>
               <p *ngIf="calculateRiskLevel(latestScore) === 'Very Low'">
                 <strong>Very Low Risk:</strong> {{ selectedCounty }} currently
-                shows a very low risk, but vigilance during storms is
-                still important.
+                shows a very low risk.
               </p>
             </div>
           </div>
@@ -208,14 +238,11 @@
                   <span class="weather-icon">💧</span>
                   <span class="weather-label">Precip</span>
                   <span class="weather-value">{{
-                    currentWeather.precipitation > 0
-                      ? (currentWeather.precipitation * 100).toFixed(0) + "%"
-                      : "None"
-                  }}</span>
+                    (currentWeather.precipitation * 100).toFixed(0)
+                  }}%</span>
                 </div>
               </div>
 
-              <!-- Weather Description -->
               <p class="weather-description" *ngIf="weatherDescription">
                 <span class="weather-icon">☁️</span> {{ weatherDescription }}
               </p>
@@ -238,69 +265,32 @@
         </div>
       </div>
 
-      <!-- Fallback Message -->
       <div class="results-card placeholder-card" *ngIf="!selectedCounty">
         <h2>Select a County</h2>
         <p>
-          Please select or search for a county above, or click on the map, to view its outage risk
-          information.
+          Please select or search for a county, or click on the map, to view its outage risk.
         </p>
       </div>
 
-      <!-- Coverage Information Card (Assumed static or from another source) -->
       <div class="coverage-info-card">
         <h2>Tennessee Outage Coverage</h2>
         <div class="coverage-stats">
           <div class="coverage-year">
             <div class="year-label">2024</div>
             <div class="stats-container">
-              <div class="coverage-stat">
-                <div class="stat-value">3.55M</div>
-                <div class="stat-label">Total Customers</div>
-              </div>
-              <div class="coverage-stat">
-                <div class="stat-value">2.84M</div>
-                <div class="stat-label">Covered Customers</div>
-              </div>
-              <div class="coverage-stat">
-                <div class="stat-value">80%</div>
-                <div class="stat-label">Coverage Rate</div>
-              </div>
+              <div class="coverage-stat"><div class="stat-value">3.55M</div><div class="stat-label">Total Customers</div></div>
+              <div class="coverage-stat"><div class="stat-value">2.84M</div><div class="stat-label">Covered Customers</div></div>
+              <div class="coverage-stat"><div class="stat-value">80%</div><div class="stat-label">Coverage Rate</div></div>
             </div>
           </div>
           <div class="coverage-trend">
             <h3>Historical Coverage Trend</h3>
             <div class="trend-data">
-              <div class="trend-item">
-                <div class="trend-year">2020</div>
-                <div class="trend-bar">
-                  <div class="bar-fill" style="width: 73%">73%</div>
-                </div>
-              </div>
-              <div class="trend-item">
-                <div class="trend-year">2021</div>
-                <div class="trend-bar">
-                  <div class="bar-fill" style="width: 73%">73%</div>
-                </div>
-              </div>
-              <div class="trend-item">
-                <div class="trend-year">2022</div>
-                <div class="trend-bar">
-                  <div class="bar-fill" style="width: 75%">75%</div>
-                </div>
-              </div>
-              <div class="trend-item">
-                <div class="trend-year">2023</div>
-                <div class="trend-bar">
-                  <div class="bar-fill" style="width: 78%">78%</div>
-                </div>
-              </div>
-              <div class="trend-item">
-                <div class="trend-year">2024</div>
-                <div class="trend-bar">
-                  <div class="bar-fill" style="width: 80%">80%</div>
-                </div>
-              </div>
+              <div class="trend-item"><div class="trend-year">2020</div><div class="trend-bar"><div class="bar-fill" style="width: 73%">73%</div></div></div>
+              <div class="trend-item"><div class="trend-year">2021</div><div class="trend-bar"><div class="bar-fill" style="width: 73%">73%</div></div></div>
+              <div class="trend-item"><div class="trend-year">2022</div><div class="trend-bar"><div class="bar-fill" style="width: 75%">75%</div></div></div>
+              <div class="trend-item"><div class="trend-year">2023</div><div class="trend-bar"><div class="bar-fill" style="width: 78%">78%</div></div></div>
+              <div class="trend-item"><div class="trend-year">2024</div><div class="trend-bar"><div class="bar-fill" style="width: 80%">80%</div></div></div>
             </div>
           </div>
         </div>
@@ -308,7 +298,6 @@
     </div>
   </div>
 
-  <!-- State Summary (Assumed static or from another source) -->
   <div class="state-summary">
     <h2>Tennessee Outage Trends</h2>
     <div class="yearly-summary">
@@ -316,67 +305,24 @@
         <div class="chart-title">Normalized Outage Metrics (2014-2024)</div>
         <div class="metric-lines">
           <div class="line-labels">
-            <div class="line-label">
-              <span class="color-dot outage-count"></span
-              ><span>Outage Count</span>
-            </div>
-            <div class="line-label">
-              <span class="color-dot max-duration"></span
-              ><span>Max Duration</span>
-            </div>
-            <div class="line-label">
-              <span class="color-dot customer-hours"></span
-              ><span>Customer Hours</span>
-            </div>
+            <div class="line-label"><span class="color-dot outage-count"></span><span>Outage Count</span></div>
+            <div class="line-label"><span class="color-dot max-duration"></span><span>Max Duration</span></div>
+            <div class="line-label"><span class="color-dot customer-hours"></span><span>Customer Hours</span></div>
           </div>
           <div class="chart-area">
-            <svg
-              width="100%"
-              height="200"
-              viewBox="0 0 900 200"
-              preserveAspectRatio="none"
-            >
-              <polyline
-                points="0,200 100,146 200,134 300,120 400,107 500,72 600,42 700,39 800,0"
-                fill="none"
-                stroke="#3f51b5"
-                stroke-width="3"
-              />
-              <polyline
-                points="0,200 100,132 200,70 300,52 400,126 500,117 600,40 700,93 800,0"
-                fill="none"
-                stroke="#ff4081"
-                stroke-width="3"
-              />
-              <polyline
-                points="0,200 100,165 200,161 300,88 400,163 500,150 600,60 700,129 800,0"
-                fill="none"
-                stroke="#4caf50"
-                stroke-width="3"
-              />
+            <svg width="100%" height="200" viewBox="0 0 900 200" preserveAspectRatio="none">
+              <polyline points="0,200 100,146 200,134 300,120 400,107 500,72 600,42 700,39 800,0" fill="none" stroke="#3f51b5" stroke-width="3"/>
+              <polyline points="0,200 100,132 200,70 300,52 400,126 500,117 600,40 700,93 800,0" fill="none" stroke="#ff4081" stroke-width="3"/>
+              <polyline points="0,200 100,165 200,161 300,88 400,163 500,150 600,60 700,129 800,0" fill="none" stroke="#4caf50" stroke-width="3"/>
             </svg>
-            <div class="year-markers">
-              <span>2014</span><span>2016</span><span>2018</span
-              ><span>2020</span><span>2022</span><span>2024</span>
-            </div>
+            <div class="year-markers"><span>2014</span><span>2016</span><span>2018</span><span>2020</span><span>2022</span><span>2024</span></div>
           </div>
         </div>
       </div>
       <div class="trend-insights">
-        <p>
-          Tennessee has experienced a steady increase in power outage events
-          from 2014 to 2024, with significant jumps in 2019-2020 and 2021-2022.
-          Overall normalized outage count has increased significantly.
-        </p>
-        <p>
-          Maximum outage duration and customer impact (customer-weighted hours)
-          both peaked in 2022, with improvement in 2023-2024 due to grid
-          resilience initiatives.
-        </p>
-        <p>
-          Key counties with historically high outage risk include Shelby, Obion,
-          Monroe, Jefferson, and Blount, though risk can vary year to year.
-        </p>
+        <p>Tennessee has experienced a steady increase in power outage events from 2014 to 2024, with significant jumps in 2019-2020 and 2021-2022. Overall normalized outage count has increased significantly.</p>
+        <p>Maximum outage duration and customer impact (customer-weighted hours) both peaked in 2022, with improvement in 2023-2024 due to grid resilience initiatives.</p>
+        <p>Key counties with historically high outage risk include Shelby, Obion, Monroe, Jefferson, and Blount, though risk can vary year to year.</p>
         <p class="data-source">Last update: May 19, 2025</p>
       </div>
     </div>

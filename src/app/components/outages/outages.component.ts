@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -14,11 +14,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner'; // Import spinner
+import { debounceTime, distinctUntilChanged, finalize, forkJoin, map } from 'rxjs'; // Added forkJoin, map
 import {
   PredictionService,
   WeatherData,
   PredictionResult,
+  CountyRanking // Import CountyRanking
 } from '../../services/prediction.service';
 
 interface CountyData {
@@ -47,6 +49,7 @@ interface WeatherInfo {
     MatButtonModule,
     MatIconModule,
     MatDividerModule,
+    MatProgressSpinnerModule // Add spinner module
   ],
 })
 export class OutagesComponent implements OnInit {
@@ -71,29 +74,27 @@ export class OutagesComponent implements OnInit {
   countyInsight: string = '';
   weatherAlert: string | null = null;
   recommendations: string[] = [];
-  currentWeather: WeatherInfo = {
-    temperature: 0,
-    windSpeed: 0,
-    precipitation: 0,
-  };
+  currentWeather: WeatherInfo = { temperature: 0, windSpeed: 0, precipitation: 0 };
   weatherDescription: string = '';
   weatherDataLoading: boolean = false;
   lastUpdated: string = '';
 
   currentPrediction: PredictionResult | null = null;
 
-  readonly MAX_EXPECTED_SCORE = 50; // Example, adjust if historical scores have a different max
-  readonly CHART_MAX_SCORE = 30; // For chart display scaling
+  readonly CHART_MAX_SCORE = 50;
 
-  // Simplified map data for demo
   mapCounties = [
-    { name: 'Davidson', x: 100, y: 50, width: 60, height: 40 },
-    { name: 'Shelby', x: 20, y: 100, width: 50, height: 40 },
-    { name: 'Knox', x: 180, y: 60, width: 50, height: 40 },
-    { name: 'Hamilton', x: 150, y: 110, width: 60, height: 40 },
+    { name: 'Shelby', x: 10, y: 100, width: 20, height: 20 }, { name: 'Tipton', x: 10, y: 80, width: 20, height: 15 },
+    { name: 'Fayette', x: 30, y: 100, width: 20, height: 15 }, { name: 'Haywood', x: 30, y: 80, width: 20, height: 15 },
+    { name: 'Madison', x: 50, y: 80, width: 20, height: 20 }, { name: 'Dyer', x: 30, y: 60, width: 20, height: 15 },
+    { name: 'Davidson', x: 100, y: 50, width: 25, height: 25 }, { name: 'Williamson', x: 100, y: 75, width: 25, height: 15 },
+    { name: 'Rutherford', x: 125, y: 60, width: 25, height: 20 }, { name: 'Sumner', x: 120, y: 30, width: 20, height: 20 },
+    { name: 'Montgomery', x: 80, y: 30, width: 25, height: 20 },
+    { name: 'Knox', x: 180, y: 60, width: 25, height: 25 }, { name: 'Hamilton', x: 160, y: 100, width: 25, height: 20 },
+    { name: 'Blount', x: 205, y: 70, width: 20, height: 15 }, { name: 'Anderson', x: 180, y: 40, width: 20, height: 15 },
+    { name: 'Sullivan', x: 220, y: 30, width: 20, height: 20 },
   ];
 
-  // Historical outage data
   countyOutageData: { [key: string]: { [key: number]: number } } = {
     Loudon: { 2015: 14.87, 2017: 6.21, 2019: 7.5, 2021: 8.15, 2022: 10.2, 2023: 9.8, 2024: 8.9 },
     Shelby: { 2015: 7.52, 2016: 7.22, 2017: 8.06, 2018: 6.97, 2019: 7.69, 2020: 15.5, 2021: 12.8, 2022: 44.17, 2023: 31.5, 2024: 23.7 },
@@ -102,15 +103,22 @@ export class OutagesComponent implements OnInit {
     Hamilton: { 2018: 6.0, 2019: 7.1, 2020: 11.5, 2021: 9.0, 2022: 10.3, 2023: 7.9, 2024: 7.2 },
   };
 
+  // For rankings
+  topHighRiskCounties: CountyRanking[] = [];
+  topLowRiskCounties: CountyRanking[] = [];
+  isFetchingRankings: boolean = false;
+
+
   constructor(
     private fb: FormBuilder,
     private predictionService: PredictionService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     this.createForm();
     this.setupSearch();
-    this.updateLastUpdatedTime();
+    this.updateLastUpdatedTimeUserLocal();
   }
 
   createForm(): void {
@@ -135,24 +143,27 @@ export class OutagesComponent implements OnInit {
 
   selectCounty(county: string): void {
     this.predictionForm.patchValue({ county });
-    this.searchControl.setValue(''); // Clear search input
-    this.filteredCounties = []; // Hide suggestions
+    this.searchControl.setValue(''); 
+    this.filteredCounties = []; 
     this.onSubmit();
   }
 
   onSubmit(): void {
     if (this.predictionForm.invalid) {
-      this.resetCountyData();
+      this.resetCountySpecificUIData();
       return;
     }
-
     const selected = this.predictionForm.get('county')?.value;
     if (selected && this.counties.includes(selected)) {
-      this.selectedCounty = selected;
-      this.updateSelectedCountyData(); // Load historical data and set initial score
-      this.fetchWeatherAndPrediction(); // Fetch live weather and prediction
+      if (this.selectedCounty !== selected) {
+        this.resetCountySpecificUIData();
+        this.selectedCounty = selected;
+        this.loadHistoricalDataForSelectedCounty();
+      }
+      this.fetchWeatherAndPrediction(); 
     } else {
-      this.resetCountyData();
+      this.resetCountySpecificUIData();
+      this.selectedCounty = null;
     }
   }
 
@@ -162,274 +173,225 @@ export class OutagesComponent implements OnInit {
     }
   }
 
-  resetCountyData(): void {
-    this.selectedCounty = null;
-    this.selectedCountyData = [];
+  resetCountySpecificUIData(): void {
     this.latestScore = 0;
-    this.countyInsight = '';
+    this.countyInsight = 'Please select a county to see insights.';
     this.recommendations = [];
     this.weatherAlert = null;
     this.currentPrediction = null;
     this.currentWeather = { temperature: 0, windSpeed: 0, precipitation: 0 };
     this.weatherDescription = '';
+    this.selectedCountyData = [];
+    this.updateLastUpdatedTimeUserLocal();
   }
 
-  updateSelectedCountyData(): void {
-    if (!this.selectedCounty) {
-      this.resetCountyData();
+  loadHistoricalDataForSelectedCounty(): void {
+    if (!this.selectedCounty) { 
+      this.selectedCountyData = [];
       return;
     }
-
-    this.selectedCountyData = [];
-    this.currentPrediction = null; // Reset current prediction when county changes before new fetch
-
-    if (this.countyOutageData[this.selectedCounty]) {
-      const countyData = this.countyOutageData[this.selectedCounty];
+    this.selectedCountyData = []; 
+    if (this.countyOutageData[this.selectedCounty]) { 
+      const countyData = this.countyOutageData[this.selectedCounty]; 
       this.selectedCountyData = Object.keys(countyData)
         .map((yearStr) => {
-          const year = parseInt(yearStr);
-          return { year, score: countyData[year] };
+            const yearNum = parseInt(yearStr, 10);
+            return { year: yearNum, score: countyData[yearNum] };
         })
         .sort((a, b) => a.year - b.year);
-
-      if (this.selectedCountyData.length > 0) {
-        this.latestScore = this.selectedCountyData[this.selectedCountyData.length - 1].score;
-      } else {
-        this.latestScore = 0;
-      }
-    } else {
-      this.latestScore = 0; // Default if no historical data
-      this.countyInsight = `Historical outage data for ${this.selectedCounty} County is currently unavailable. Monitoring general state trends is advised.`;
-      this.recommendations = ['Monitor local weather alerts.', 'Ensure basic emergency supplies are ready.'];
     }
-     // This will be updated by fetchWeatherAndPrediction if successful
-    this.generateCountyInsight();
-    this.generateRecommendations(this.calculateRiskLevel(this.latestScore));
   }
 
   fetchWeatherAndPrediction(): void {
     if (!this.selectedCounty) return;
-
     this.weatherDataLoading = true;
-    this.currentPrediction = null; // Clear previous prediction
+    this.currentPrediction = null;
 
-    this.predictionService.getCurrentWeather(this.selectedCounty).subscribe({
+    this.predictionService.getCurrentWeather(this.selectedCounty).pipe(
+        finalize(() => { 
+            this.weatherDataLoading = false;
+            this.cdr.detectChanges(); 
+        })
+    ).subscribe({
       next: (weatherData) => {
         this.currentWeather = {
           temperature: weatherData.temperature,
           windSpeed: weatherData.windSpeed,
-          precipitation: weatherData.precipitationChance / 100,
+          precipitation: (weatherData.precipitationChance ?? 0) / 100,
         };
         this.weatherDescription = weatherData.weatherDescription || '';
-        this.lastUpdated = weatherData.lastUpdated || new Date().toISOString();
+        this.lastUpdated = weatherData.lastUpdated || new Date().toISOString(); 
         this.generateWeatherAlert(weatherData);
 
         this.predictionService.predict(weatherData).subscribe({
           next: (prediction) => {
             this.currentPrediction = prediction;
-            this.latestScore = prediction.probability * 100; // Update score from prediction
-            
-            this.generateCountyInsight(); // Regenerate with new score and prediction
+            this.latestScore = prediction.probability * 100;
+            if (prediction.lastUpdated) {
+                this.lastUpdated = prediction.lastUpdated;
+            }
+            this.generateCountyInsight(); 
             this.generateRecommendations(this.calculateRiskLevel(this.latestScore));
-            this.weatherDataLoading = false;
           },
           error: (err) => {
             console.error('Error getting prediction:', err);
-            // If prediction fails, insights will use historical score (already set or re-set if needed)
+            this.fallbackToHistoricalScore();
             this.generateCountyInsight();
             this.generateRecommendations(this.calculateRiskLevel(this.latestScore));
-            this.weatherDataLoading = false;
           },
         });
       },
       error: (err) => {
         console.error('Error getting weather data:', err);
-        this.generateWeatherData(); // Fallback to simulated weather
-        // Insights will use historical score
+        this.generateWeatherDataFallback(); 
+        this.fallbackToHistoricalScore();
         this.generateCountyInsight();
         this.generateRecommendations(this.calculateRiskLevel(this.latestScore));
-        this.weatherDataLoading = false;
       },
     });
+  }
+
+  fallbackToHistoricalScore() {
+    if (this.selectedCounty && this.countyOutageData[this.selectedCounty]) {
+        const countyHistData = this.countyOutageData[this.selectedCounty];
+        const years = Object.keys(countyHistData).map(Number);
+        if (years.length > 0) {
+            const latestYear = Math.max(...years);
+            this.latestScore = countyHistData[latestYear];
+        } else { this.latestScore = 0; }
+    } else { this.latestScore = 0; }
   }
 
   generateCountyInsight(): void {
     if (!this.selectedCounty) {
         this.countyInsight = 'Please select a county to see insights.';
-        this.recommendations = [];
         return;
     }
-
     if (this.currentPrediction) {
-        const probability = this.currentPrediction.probability * 100; // Score is already probability * 100
-        const riskLevel = this.calculateRiskLevel(this.latestScore); // Use this.latestScore
-        let riskDescription = 'unknown';
-
-        switch (riskLevel) {
-            case 'Very High': riskDescription = 'very high'; break;
-            case 'High': riskDescription = 'high'; break;
-            case 'Moderate': riskDescription = 'moderate'; break;
-            case 'Low': riskDescription = 'lower'; break;
-            case 'Very Low': riskDescription = 'very low'; break;
-        }
-
+        const riskLevel = this.calculateRiskLevel(this.latestScore);
+        let riskDescription = riskLevel.toLowerCase().replace('very ', 'very-');
         this.countyInsight = `${this.selectedCounty} County shows a ${riskDescription} risk based on current weather data. Outage probability is ${this.latestScore.toFixed(1)}%.`;
-        if (this.currentPrediction.recommendation) {
-             // this.countyInsight += ` Recommendation: ${this.currentPrediction.recommendation}`;
-        }
-
     } else if (this.selectedCountyData.length > 0) {
-        // Fallback to historical data analysis if no current prediction
-        let trendDescription = 'limited historical data';
-        if (this.selectedCountyData.length >= 2) {
-            const firstScore = this.selectedCountyData[0].score;
-            const lastScore = this.latestScore; // This is from historical here
-            const secondLastScore = this.selectedCountyData.length > 1 ? this.selectedCountyData[this.selectedCountyData.length - 2].score : lastScore;
-
-            if (lastScore > firstScore * 1.3) trendDescription = 'an increasing trend';
-            else if (lastScore < firstScore * 0.8) trendDescription = 'a decreasing trend';
-            else trendDescription = 'a relatively stable trend';
-
-            if (lastScore > secondLastScore * 1.15) trendDescription += ', with a recent uptick';
-            else if (lastScore < secondLastScore * 0.85) trendDescription += ', though potentially decreasing recently';
-        }
-
         const riskLevelString = this.calculateRiskLevel(this.latestScore);
-        let riskDescription = 'unknown';
-        switch (riskLevelString) {
-            case 'Very High': riskDescription = 'very high'; break;
-            case 'High': riskDescription = 'high'; break;
-            case 'Moderate': riskDescription = 'moderate'; break;
-            case 'Low': riskDescription = 'lower'; break;
-            case 'Very Low': riskDescription = 'very low'; break;
+        let riskDescription = riskLevelString.toLowerCase().replace('very ', 'very-');
+        let trendDescription = 'limited historical data';
+         if (this.selectedCountyData.length >= 2) {
+            const firstScore = this.selectedCountyData[0].score;
+            const lastHistScore = this.selectedCountyData[this.selectedCountyData.length - 1].score;
+            if (lastHistScore > firstScore * 1.3) trendDescription = 'an increasing trend';
+            else if (lastHistScore < firstScore * 0.8) trendDescription = 'a decreasing trend';
+            else trendDescription = 'a relatively stable trend';
         }
-        this.countyInsight = `${this.selectedCounty} County shows a ${riskDescription} risk based on the latest historical score of ${this.latestScore.toFixed(1)}. Historical data suggests ${trendDescription} in outage events.`;
-    
+        this.countyInsight = `${this.selectedCounty} County shows a ${riskDescription} risk based on the latest historical score of ${this.latestScore.toFixed(1)}. Historical data suggests ${trendDescription}. Live prediction unavailable.`;
     } else {
-        this.countyInsight = `No current prediction or historical outage data available to generate insights for ${this.selectedCounty}.`;
-        this.recommendations = ['Monitor local weather alerts.', 'Ensure basic emergency supplies are ready.'];
+        this.countyInsight = `No current prediction or historical data available for ${this.selectedCounty}.`;
     }
+    this.cdr.detectChanges();
   }
   
-  generateWeatherData(): void {
+  generateWeatherDataFallback(): void { 
     this.currentWeather = {
       temperature: Math.floor(Math.random() * 30) + 55,
       windSpeed: Math.floor(Math.random() * 25) + 5,
       precipitation: Math.random() > 0.7 ? parseFloat((Math.random() * 0.5).toFixed(2)) : 0,
     };
     this.weatherDescription = 'Simulated weather conditions (API fallback)';
-    this.updateLastUpdatedTime();
-    this.generateWeatherAlert();
+    this.lastUpdated = new Date().toISOString(); 
+    this.generateWeatherAlert(); 
   }
 
-  updateLastUpdatedTime(): void {
-    const now = new Date();
-    this.lastUpdated = now.toISOString();
+  updateLastUpdatedTimeUserLocal(): void { 
+    this.lastUpdated = new Date().toISOString();
   }
 
-  generateWeatherAlert(weatherData?: WeatherData): void {
+  generateWeatherAlert(weatherDataParam?: WeatherData): void {
     this.weatherAlert = null;
-    const data = weatherData || this.currentWeather; // Use API data if available, else simulated
-
-    if (weatherData) { // Prioritize actual weatherData if passed
-        if (weatherData.windGust > 30) {
-            this.weatherAlert = `High wind warning: ${weatherData.windGust} mph gusts reported. Increased risk of localized outages.`;
-        } else if (weatherData.precipitationChance > 70 && weatherData.windSpeed > 15) {
-            this.weatherAlert = `Moderate rain (${weatherData.precipitationChance}% chance) and wind (${weatherData.windSpeed} mph) may increase outage potential.`;
-        } else if (weatherData.temperature > 95) {
-            this.weatherAlert = `Extreme heat warning: ${weatherData.temperature}°F. High demand may strain the grid.`;
-        }
-    } else { // Fallback to current (potentially simulated) weather
-        if (this.currentWeather.windSpeed > 25) { // Assuming windSpeed is main indicator if windGust not in simulated
-             this.weatherAlert = `High wind warning: ${this.currentWeather.windSpeed} mph winds reported. Increased risk of localized outages.`;
-        } else if (this.currentWeather.precipitation > 0.3 && this.currentWeather.windSpeed > 15) {
-            this.weatherAlert = `Moderate rain (${this.currentWeather.precipitation}) and wind (${this.currentWeather.windSpeed} mph) may increase outage potential.`;
-        } else if (this.currentWeather.temperature > 95) { // Assuming temperature is in F
-            this.weatherAlert = `Extreme heat warning: ${this.currentWeather.temperature}°F. High demand may strain the grid.`;
-        }
+    const ds = weatherDataParam || this.currentWeather; 
+    let temp: number, windSpeed: number, precipChance: number | undefined, windGust: number | undefined;
+    if ('precipitationChance' in ds) {
+        const wd = ds as WeatherData;
+        temp = wd.temperature; windSpeed = wd.windSpeed; precipChance = wd.precipitationChance; windGust = wd.windGust;
+    } else {
+        const wi = ds as WeatherInfo;
+        temp = wi.temperature; windSpeed = wi.windSpeed; precipChance = wi.precipitation * 100; windGust = windSpeed * 1.5;
     }
+    if (windGust && windGust > 30) this.weatherAlert = `High wind warning: ${windGust.toFixed(0)} mph gusts.`;
+    else if (precipChance && precipChance > 70 && windSpeed > 15) this.weatherAlert = `Moderate rain (${precipChance.toFixed(0)}% chance) and wind (${windSpeed.toFixed(0)} mph).`;
+    else if (temp > 95) this.weatherAlert = `Extreme heat warning: ${temp.toFixed(0)}°F.`;
   }
 
   generateRecommendations(riskLevel: string): void {
     if (this.currentPrediction && this.currentPrediction.recommendation) {
-      const sentences = this.currentPrediction.recommendation.split(/\.\s+/);
-      this.recommendations = sentences
-        .filter((sentence) => sentence.trim().length > 0)
-        .map((sentence) => sentence.trim() + (sentence.endsWith('.') ? '' : '.'));
-      this.recommendations.push('Keep phones and power banks charged.', 'Have flashlights and extra batteries accessible.');
-      return;
+      this.recommendations = this.currentPrediction.recommendation.split(/\.\s+/)
+        .filter(s => s.trim().length > 0).map(s => s.trim() + (s.endsWith('.') ? '' : '.'));
+    } else { this.recommendations = ['Monitor local weather alerts closely.']; }
+    this.recommendations.push('Keep phones/power banks charged.', 'Have flashlights/batteries accessible.');
+    if (!this.currentPrediction?.recommendation) {
+        this.recommendations.push('Know manual garage door operation.', "Check utility's outage map/app.");
     }
-
-    this.recommendations = [
-      'Keep phones and power banks charged.',
-      'Have flashlights and extra batteries accessible.',
-      'Know how to manually open your garage door if applicable.',
-      "Check your utility provider's outage map/app for real-time updates.",
-    ];
-
     switch (riskLevel) {
-      case 'Very High':
-        this.recommendations.push(
-          'Strongly consider a backup generator or UPS for essential needs.',
-          'Maintain a stock of non-perishable food and water for 3+ days.',
-          'Review and communicate emergency plans with household members.',
-        );
-        break;
-      case 'High':
-        this.recommendations.push(
-          'Ensure adequate non-perishable food and water for at least 1-2 days.',
-          'Prepare a cooler for transferring perishable food if power is out long.',
-          'Check on vulnerable neighbors if safe during an outage.',
-        );
-        break;
-      case 'Moderate':
-        this.recommendations.push('Have a cooler ready for perishables.');
-        break;
+      case 'Very High': this.recommendations.unshift('Strongly consider backup generator/UPS.', 'Stock 3+ days food/water.'); break;
+      case 'High': this.recommendations.unshift('Stock 1-2 days food/water.', 'Prepare cooler for perishables.'); break;
+      case 'Moderate': if (!this.currentPrediction?.recommendation?.includes("cooler")) this.recommendations.push('Have cooler ready.'); break;
     }
-
-    if (this.weatherAlert?.includes('wind')) {
-      this.recommendations.push('Secure loose outdoor items (furniture, bins).');
-    }
-    if (this.weatherAlert?.includes('heat')) {
-      this.recommendations.push('Stay hydrated and check on cooling systems.');
-    }
-    if (this.weatherAlert?.includes('rain') && this.currentWeather.precipitation > 0.1) {
-      this.recommendations.push('Monitor for potential localized flooding if rain is heavy or persistent.');
-    }
+    if (this.weatherAlert?.includes('wind')) this.recommendations.push('Secure loose outdoor items.');
+    if (this.weatherAlert?.includes('heat')) this.recommendations.push('Stay hydrated; check cooling systems.');
+    if (this.weatherAlert?.includes('rain') && this.currentWeather.precipitation > 0.1) this.recommendations.push('Monitor for localized flooding.');
+    this.cdr.detectChanges();
   }
 
-  formatDateTime(dateString: string): string {
-    if (!dateString) return 'Not available';
+  formatDateTime(dateStringISO: string): string {
+    if (!dateStringISO) return 'Not available';
     try {
-      const date = new Date(dateString);
+      const date = new Date(dateStringISO);
       return date.toLocaleString('en-US', {
         month: 'short', day: 'numeric', year: 'numeric',
         hour: '2-digit', minute: '2-digit', hour12: true,
       });
-    } catch (error) {
-      return dateString;
-    }
+    } catch (error) { return dateStringISO; }
   }
 
   calculateRiskLevel(score: number): string {
-    if (score > 25) return 'Very High'; // If from prediction, 25% prob. If historical, score 25.
-    if (score > 15) return 'High';
-    if (score > 8) return 'Moderate';
-    if (score > 4) return 'Low';
+    if (score > 75) return 'Very High'; if (score > 50) return 'High';
+    if (score > 25) return 'Moderate'; if (score > 10) return 'Low';
     return 'Very Low';
   }
 
   getColorForScore(score: number): string {
-    if (score > 25) return '#d32f2f';
-    if (score > 15) return '#f44336';
-    if (score > 8) return '#ff9800';
-    if (score > 4) return '#ffeb3b'; // Consider a less vibrant yellow for text contrast if used as background
-    return '#4caf50';
+    const riskLevel = this.calculateRiskLevel(score);
+    switch(riskLevel) {
+        case 'Very High': return '#d32f2f'; case 'High': return '#f44336';
+        case 'Moderate': return '#ff9800'; case 'Low': return '#ffc107';
+        case 'Very Low': return '#4caf50'; default: return '#9e9e9e';
+    }
   }
 
   getBarHeight(score: number): number {
-    const scaledScore = Math.min(score, this.CHART_MAX_SCORE);
+    const scaledScore = Math.min(score, this.CHART_MAX_SCORE); 
     const heightPercentage = (scaledScore / this.CHART_MAX_SCORE) * 100;
     return Math.max(5, Math.min(100, heightPercentage));
+  }
+
+  // Method to fetch rankings for all counties
+  fetchCountyRankings(): void {
+    this.isFetchingRankings = true;
+    this.topHighRiskCounties = [];
+    this.topLowRiskCounties = [];
+
+    this.predictionService.getCountyRankings()
+      .pipe(finalize(() => {
+        this.isFetchingRankings = false;
+        this.cdr.detectChanges();
+      }))
+      .subscribe({
+        next: (rankings) => {
+          this.topHighRiskCounties = rankings.high_risk;
+          this.topLowRiskCounties = rankings.low_risk;
+        },
+        error: (err) => {
+          console.error("Error fetching county rankings:", err);
+          // Optionally show an error message to the user
+        }
+      });
   }
 }

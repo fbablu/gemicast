@@ -18,6 +18,15 @@ export interface WeatherData {
   county: string;
   lastUpdated?: string;
   weatherDescription?: string;
+  // Added from backend potential fields
+  mixingHeight?: number;
+  apparentTemperature?: number;
+}
+
+export interface RiskFactor {
+  factor: string;
+  value: string;
+  severity: string;
 }
 
 export interface PredictionResult {
@@ -26,217 +35,126 @@ export interface PredictionResult {
   estimated_duration: number;
   recommendation: string;
   lastUpdated?: string;
-  risk_factors: {
-    factor: string;
-    value: string;
-    severity: string;
-  }[];
+  risk_factors: RiskFactor[];
 }
+
+export interface CountyRanking {
+    county: string;
+    probability: number;
+}
+
+export interface RankingsResponse {
+    high_risk: CountyRanking[];
+    low_risk: CountyRanking[];
+}
+
 
 @Injectable({
   providedIn: 'root',
 })
 export class PredictionService {
-  // Use the apiUrl from environment
-  private apiUrl = environment.apiUrl;
+  private apiUrl = environment.apiUrl; // Ensure this is correctly set in your environment files
 
   constructor(private http: HttpClient) {
-    console.log('Using API URL:', this.apiUrl);
+    console.log('Using API URL for PredictionService:', this.apiUrl);
   }
 
   predict(weatherData: WeatherData): Observable<PredictionResult> {
-    // Auto-populate missing time fields if not provided
-    if (!weatherData.month) {
-      const now = new Date();
-      weatherData.month = now.getMonth() + 1;
-      weatherData.dayOfWeek = now.getDay();
-      weatherData.hour = now.getHours();
-    }
-
-    if (!weatherData.county) {
-      weatherData.county = 'Davidson';
-    }
-
-    console.log('Sending prediction request with data:', weatherData);
+    const now = new Date();
+    const payload = {
+      ...weatherData,
+      month: weatherData.month ?? now.getMonth() + 1,
+      dayOfWeek: weatherData.dayOfWeek ?? now.getDay(),
+      hour: weatherData.hour ?? now.getHours(),
+    };
 
     return this.http
-      .post<PredictionResult>(`${this.apiUrl}/predict`, weatherData)
+      .post<PredictionResult>(`${this.apiUrl}/predict`, payload)
       .pipe(
-        tap((response) => console.log('Prediction response:', response)),
+        tap((response) => console.log('Prediction API response:', response)),
         catchError((error) => {
-          console.error('Error making prediction:', error);
-          // Fallback to mock data if API fails
-          return of(this.getFallbackPrediction(weatherData));
+          console.error('Error making prediction via API:', error);
+          return of(this.getFallbackPrediction(payload));
         }),
       );
   }
 
-  // Function to fetch current weather data for a location
   getCurrentWeather(county: string): Observable<WeatherData> {
-    console.log(
-      `Fetching weather for ${county} from ${this.apiUrl}/weather?county=${county}`,
-    );
     return this.http
-      .get<WeatherData>(`${this.apiUrl}/weather?county=${county}`)
+      .get<WeatherData>(`${this.apiUrl}/weather?county=${encodeURIComponent(county)}`)
       .pipe(
-        tap((data) => console.log('Weather data received:', data)),
+        tap((data) => console.log(`Weather data for ${county}:`, data)),
         catchError((error) => {
-          console.error('Error fetching weather data:', error);
-          // Generate synthetic weather data if API fails
+          console.error(`Error fetching weather for ${county}:`, error);
           const synthetic = this.generateSyntheticWeather(county);
-          synthetic.weatherDescription = 'API ERROR - Using synthetic data';
+          synthetic.weatherDescription = `API ERROR for ${county} - Using synthetic data`;
           return of(synthetic);
         }),
       );
   }
 
-  /**
-   * Get feature importance from the model
-   */
-  getFeatureImportance(): Observable<
-    { feature: string; importance: number }[]
-  > {
-    return this.http
-      .get<{ feature: string; importance: number }[]>(`${this.apiUrl}/features`)
+  getCountyRankings(): Observable<RankingsResponse> {
+    return this.http.get<RankingsResponse>(`${this.apiUrl}/rankings`)
       .pipe(
-        catchError(() => {
-          // Fallback to hardcoded data if API fails
-          const featureImportance = [
-            { feature: 'Wind Direction', importance: 3632.09 },
-            { feature: 'Wind Gust', importance: 368.04 },
-            { feature: 'Relative Humidity', importance: 9.8 },
-            { feature: 'Wind Speed', importance: 9.35 },
-            { feature: 'Mixing Height', importance: 6.38 },
-            { feature: 'Apparent Temperature', importance: 5.34 },
-            { feature: 'Dew Point', importance: 5.2 },
-          ];
-          return of(featureImportance);
-        }),
+        tap((data) => console.log('County rankings data:', data)),
+        catchError((error) => {
+          console.error('Error fetching county rankings:', error);
+          // Provide a fallback empty or mock ranking
+          return of({ high_risk: [], low_risk: [] });
+        })
       );
   }
 
-  /**
-   * Get model accuracy metrics
-   */
-  getModelMetrics(): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/metrics`).pipe(
-      catchError(() => {
-        // Fallback to hardcoded metrics if API fails
-        const metrics = {
-          accuracy: 0.998,
-          precision: 0.998,
-          recall: 0.998,
-          f1Score: 0.998,
-          confusionMatrix: {
-            truePositives: 504,
-            falsePositives: 1,
-            trueNegatives: 504,
-            falseNegatives: 1,
-          },
-        };
-        return of(metrics);
-      }),
-    );
-  }
-
-  // Helper function to generate realistic weather data
   private generateSyntheticWeather(county: string): WeatherData {
-    // Generate somewhat realistic weather data
-    const temp = Math.round(50 + Math.random() * 40); // 50-90°F
-    const windSpeed = Math.round(5 + Math.random() * 25); // 5-30 mph
-    const windGust = windSpeed + Math.round(Math.random() * 15); // Higher than wind speed
-    const relativeHumidity = Math.round(30 + Math.random() * 60); // 30-90%
     const now = new Date();
-
+    const temp = Math.round(50 + Math.random() * 40);
+    const windSpeed = Math.round(5 + Math.random() * 25);
     return {
-      windDirection: Math.round(Math.random() * 360), // 0-360 degrees
-      windGust: windGust,
+      windDirection: Math.round(Math.random() * 360),
+      windGust: windSpeed + Math.round(Math.random() * 15),
       windSpeed: windSpeed,
-      relativeHumidity: relativeHumidity,
+      relativeHumidity: Math.round(30 + Math.random() * 60),
       temperature: temp,
-      dewpoint: Math.round(temp - 10 - Math.random() * 20), // Lower than temp
-      precipitationChance: Math.round(Math.random() * 100), // 0-100%
+      dewpoint: Math.round(temp - 10 - Math.random() * 20),
+      precipitationChance: Math.round(Math.random() * 100),
       county: county,
       lastUpdated: now.toISOString(),
-      weatherDescription: 'SYNTHETIC DATA (API FALLBACK)',
+      weatherDescription: 'SYNTHETIC WEATHER (SERVICE FALLBACK)',
+      month: now.getMonth() +1,
+      dayOfWeek: now.getDay(),
+      hour: now.getHours(),
+      mixingHeight: 500,
+      apparentTemperature: temp,
     };
   }
 
-  // Provide a realistic fallback prediction when API is unavailable
   private getFallbackPrediction(data: WeatherData): PredictionResult {
-    // Calculate risk based on input weather data
-    const windRisk = data.windGust > 30 || data.windSpeed > 25;
-    const precipRisk = data.precipitationChance > 70;
-    const outageRisk = windRisk || precipRisk;
+    const windRisk = (data.windGust ?? 0) > 30 || (data.windSpeed ?? 0) > 25;
+    const precipRisk = (data.precipitationChance ?? 0) > 70;
+    let probability = 0.1; // Base
+    if ((data.windGust ?? 0) > 40) probability += 0.3; else if ((data.windGust ?? 0) > 30) probability += 0.15;
+    if ((data.windSpeed ?? 0) > 30) probability += 0.2; else if ((data.windSpeed ?? 0) > 20) probability += 0.1;
+    if ((data.precipitationChance ?? 0) > 80) probability += 0.15; else if ((data.precipitationChance ?? 0) > 60) probability += 0.05;
+    probability = Math.min(probability, 0.95);
 
-    // Calculate probability based on factors
-    let probability = 0.1; // Base probability
+    const duration = windRisk ? 1 + (data.windGust ?? 0) / 15 : 0.5 + (data.precipitationChance ?? 0) / 150;
+    const riskFactors: RiskFactor[] = [];
+    if ((data.windGust ?? 0) > 30) riskFactors.push({ factor: 'High Wind Gusts', value: `${data.windGust} mph`, severity: (data.windGust ?? 0) > 40 ? 'high' : 'medium' });
+    if ((data.windSpeed ?? 0) > 20) riskFactors.push({ factor: 'Sustained Wind', value: `${data.windSpeed} mph`, severity: (data.windSpeed ?? 0) > 30 ? 'high' : 'medium' });
+    if ((data.precipitationChance ?? 0) > 60) riskFactors.push({ factor: 'Precipitation Risk', value: `${data.precipitationChance}%`, severity: (data.precipitationChance ?? 0) > 80 ? 'high' : 'medium' });
 
-    if (data.windGust > 40) probability += 0.4;
-    else if (data.windGust > 30) probability += 0.2;
-
-    if (data.windSpeed > 30) probability += 0.3;
-    else if (data.windSpeed > 20) probability += 0.15;
-
-    if (data.precipitationChance > 80) probability += 0.2;
-    else if (data.precipitationChance > 60) probability += 0.1;
-
-    probability = Math.min(probability, 0.95); // Cap at 95%
-
-    // Calculate duration based on conditions
-    const duration = windRisk
-      ? 1 + data.windGust / 10
-      : 0.5 + data.precipitationChance / 100;
-
-    // Generate risk factors
-    const riskFactors = [];
-
-    if (data.windGust > 30) {
-      riskFactors.push({
-        factor: 'High Wind Gusts',
-        value: `${data.windGust} mph`,
-        severity: data.windGust > 40 ? 'high' : 'medium',
-      });
-    }
-
-    if (data.windSpeed > 20) {
-      riskFactors.push({
-        factor: 'Sustained Wind',
-        value: `${data.windSpeed} mph`,
-        severity: data.windSpeed > 30 ? 'high' : 'medium',
-      });
-    }
-
-    if (data.precipitationChance > 60) {
-      riskFactors.push({
-        factor: 'Precipitation Risk',
-        value: `${data.precipitationChance}%`,
-        severity: data.precipitationChance > 80 ? 'high' : 'medium',
-      });
-    }
-
-    // Generate recommendation
     let recommendation = '';
-    if (probability > 0.7) {
-      recommendation =
-        'High risk of power outages. Implement emergency protocols, prepare backup power solutions, and consider postponing non-essential operations.';
-    } else if (probability > 0.4) {
-      recommendation =
-        'Moderate risk of power disruptions. Have backup plans ready and ensure critical systems are prepared for possible outages.';
-    } else {
-      recommendation =
-        'Low risk of outages. Continue normal operations but monitor weather conditions for changes.';
-    }
-
-    const now = new Date();
-
+    if (probability > 0.6) recommendation = 'High risk of power outages. Implement emergency protocols.';
+    else if (probability > 0.3) recommendation = 'Moderate risk of power disruptions. Have backup plans ready.';
+    else recommendation = 'Low risk of outages. Monitor weather conditions.';
+    
     return {
-      outage_likely: probability > 0.5,
-      probability: probability,
-      estimated_duration: duration,
-      recommendation: recommendation,
-      risk_factors: riskFactors,
-      lastUpdated: now.toISOString(),
+      outage_likely: probability > 0.5, probability: probability, estimated_duration: roundToFirstDecimal(duration),
+      recommendation: recommendation, risk_factors: riskFactors, lastUpdated: new Date().toISOString(),
     };
   }
+}
+
+function roundToFirstDecimal(num: number): number {
+    return Math.round(num * 10) / 10;
 }
