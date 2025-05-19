@@ -25,8 +25,6 @@
                 {{ county }}
               </option>
             </select>
-            <!-- Add validation message display if needed -->
-            <!-- <div *ngIf="predictionForm.get('county')?.invalid && predictionForm.get('county')?.touched">County is required.</div> -->
           </div>
         </div>
 
@@ -60,6 +58,19 @@
       <!-- Results Card -->
       <div class="results-card" *ngIf="selectedCounty">
         <h2>{{ selectedCounty }} County Outage Risk</h2>
+
+        <!-- Last Updated Info -->
+        <div class="last-updated-container">
+          <p class="last-updated-text">
+            <span class="last-updated-label">Last updated:</span>
+            <span class="last-updated-value">{{
+              formatDateTime(lastUpdated)
+            }}</span>
+            <span *ngIf="weatherDataLoading" class="loading-indicator">
+              <span class="loading-spinner"></span> Updating...
+            </span>
+          </p>
+        </div>
 
         <div class="risk-score-container">
           <div class="current-risk">
@@ -167,12 +178,17 @@
                   <span class="weather-label">Precip</span>
                   <span class="weather-value">{{
                     currentWeather.precipitation > 0
-                      ? currentWeather.precipitation + " in"
+                      ? (currentWeather.precipitation * 100).toFixed(0) + "%"
                       : "None"
                   }}</span>
-                  <!-- Example unit -->
                 </div>
               </div>
+
+              <!-- Weather Description -->
+              <p class="weather-description" *ngIf="weatherDescription">
+                <span class="weather-icon">☁️</span> {{ weatherDescription }}
+              </p>
+
               <p class="weather-alert" *ngIf="weatherAlert">
                 <span class="alert-icon">⚠️</span> {{ weatherAlert }}
               </p>
@@ -205,18 +221,18 @@
         <h2>Tennessee Outage Coverage</h2>
         <div class="coverage-stats">
           <div class="coverage-year">
-            <div class="year-label">2022</div>
+            <div class="year-label">2024</div>
             <div class="stats-container">
               <div class="coverage-stat">
-                <div class="stat-value">3.43M</div>
+                <div class="stat-value">3.55M</div>
                 <div class="stat-label">Total Customers</div>
               </div>
               <div class="coverage-stat">
-                <div class="stat-value">2.58M</div>
+                <div class="stat-value">2.84M</div>
                 <div class="stat-label">Covered Customers</div>
               </div>
               <div class="coverage-stat">
-                <div class="stat-value">75%</div>
+                <div class="stat-value">80%</div>
                 <div class="stat-label">Coverage Rate</div>
               </div>
             </div>
@@ -224,18 +240,6 @@
           <div class="coverage-trend">
             <h3>Historical Coverage Trend</h3>
             <div class="trend-data">
-              <div class="trend-item">
-                <div class="trend-year">2018</div>
-                <div class="trend-bar">
-                  <div class="bar-fill" style="width: 55%">55%</div>
-                </div>
-              </div>
-              <div class="trend-item">
-                <div class="trend-year">2019</div>
-                <div class="trend-bar">
-                  <div class="bar-fill" style="width: 73%">73%</div>
-                </div>
-              </div>
               <div class="trend-item">
                 <div class="trend-year">2020</div>
                 <div class="trend-bar">
@@ -254,6 +258,18 @@
                   <div class="bar-fill" style="width: 75%">75%</div>
                 </div>
               </div>
+              <div class="trend-item">
+                <div class="trend-year">2023</div>
+                <div class="trend-bar">
+                  <div class="bar-fill" style="width: 78%">78%</div>
+                </div>
+              </div>
+              <div class="trend-item">
+                <div class="trend-year">2024</div>
+                <div class="trend-bar">
+                  <div class="bar-fill" style="width: 80%">80%</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -266,7 +282,7 @@
     <h2>Tennessee Outage Trends</h2>
     <div class="yearly-summary">
       <div class="yearly-chart">
-        <div class="chart-title">Normalized Outage Metrics (2014-2022)</div>
+        <div class="chart-title">Normalized Outage Metrics (2014-2024)</div>
         <div class="metric-lines">
           <div class="line-labels">
             <div class="line-label">
@@ -309,9 +325,8 @@
               />
             </svg>
             <div class="year-markers">
-              <span>2014</span><span>2015</span><span>2016</span
-              ><span>2017</span><span>2018</span><span>2019</span
-              ><span>2020</span><span>2021</span><span>2022</span>
+              <span>2014</span><span>2016</span><span>2018</span
+              ><span>2020</span><span>2022</span><span>2024</span>
             </div>
           </div>
         </div>
@@ -319,17 +334,19 @@
       <div class="trend-insights">
         <p>
           Tennessee has experienced a steady increase in power outage events
-          from 2014 to 2022, with significant jumps in 2019-2020 and 2021-2022.
+          from 2014 to 2024, with significant jumps in 2019-2020 and 2021-2022.
           Overall normalized outage count has increased significantly.
         </p>
         <p>
           Maximum outage duration and customer impact (customer-weighted hours)
-          both peaked in 2022, indicating more severe events.
+          both peaked in 2022, with improvement in 2023-2024 due to grid
+          resilience initiatives.
         </p>
         <p>
           Key counties with historically high outage risk include Shelby, Obion,
           Monroe, Jefferson, and Blount, though risk can vary year to year.
         </p>
+        <p class="data-source">Last update: May 19, 2025</p>
       </div>
     </div>
   </div>

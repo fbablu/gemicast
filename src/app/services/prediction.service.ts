@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 export interface WeatherData {
   windDirection: number;
@@ -15,6 +16,8 @@ export interface WeatherData {
   dayOfWeek?: number;
   hour?: number;
   county: string;
+  lastUpdated?: string;
+  weatherDescription?: string;
 }
 
 export interface PredictionResult {
@@ -22,6 +25,7 @@ export interface PredictionResult {
   probability: number;
   estimated_duration: number;
   recommendation: string;
+  lastUpdated?: string;
   risk_factors: {
     factor: string;
     value: string;
@@ -33,10 +37,12 @@ export interface PredictionResult {
   providedIn: 'root',
 })
 export class PredictionService {
-  // Updated to use environment variable with fallback
-  private apiUrl = 'http://localhost:5000/api';
+  // Use the apiUrl from environment
+  private apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    console.log('Using API URL:', this.apiUrl);
+  }
 
   predict(weatherData: WeatherData): Observable<PredictionResult> {
     // Auto-populate missing time fields if not provided
@@ -48,9 +54,8 @@ export class PredictionService {
     }
 
     if (!weatherData.county) {
-      weatherData.county = "Davidson"
+      weatherData.county = 'Davidson';
     }
-    
 
     console.log('Sending prediction request with data:', weatherData);
 
@@ -68,13 +73,19 @@ export class PredictionService {
 
   // Function to fetch current weather data for a location
   getCurrentWeather(county: string): Observable<WeatherData> {
+    console.log(
+      `Fetching weather for ${county} from ${this.apiUrl}/weather?county=${county}`,
+    );
     return this.http
       .get<WeatherData>(`${this.apiUrl}/weather?county=${county}`)
       .pipe(
+        tap((data) => console.log('Weather data received:', data)),
         catchError((error) => {
           console.error('Error fetching weather data:', error);
           // Generate synthetic weather data if API fails
-          return of(this.generateSyntheticWeather(county));
+          const synthetic = this.generateSyntheticWeather(county);
+          synthetic.weatherDescription = 'API ERROR - Using synthetic data';
+          return of(synthetic);
         }),
       );
   }
@@ -135,6 +146,7 @@ export class PredictionService {
     const windSpeed = Math.round(5 + Math.random() * 25); // 5-30 mph
     const windGust = windSpeed + Math.round(Math.random() * 15); // Higher than wind speed
     const relativeHumidity = Math.round(30 + Math.random() * 60); // 30-90%
+    const now = new Date();
 
     return {
       windDirection: Math.round(Math.random() * 360), // 0-360 degrees
@@ -145,6 +157,8 @@ export class PredictionService {
       dewpoint: Math.round(temp - 10 - Math.random() * 20), // Lower than temp
       precipitationChance: Math.round(Math.random() * 100), // 0-100%
       county: county,
+      lastUpdated: now.toISOString(),
+      weatherDescription: 'SYNTHETIC DATA (API FALLBACK)',
     };
   }
 
@@ -214,12 +228,15 @@ export class PredictionService {
         'Low risk of outages. Continue normal operations but monitor weather conditions for changes.';
     }
 
+    const now = new Date();
+
     return {
       outage_likely: probability > 0.5,
       probability: probability,
       estimated_duration: duration,
       recommendation: recommendation,
       risk_factors: riskFactors,
+      lastUpdated: now.toISOString(),
     };
   }
 }

@@ -3,9 +3,6 @@
 // Only include public API keys that are safe to be visible (e.g. Maps and Weather like below).
 // For sensitive data, use backend services or runtime configuration, or env variables.
 
-
-
-
 export const environment = {
   production: false,
   apiUrl: 'https://predict-outage-358654363672.us-central1.run.app',

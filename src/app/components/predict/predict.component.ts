@@ -1,4 +1,5 @@
 // src/app/components/predict/predict.component.ts
+
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -73,11 +74,15 @@ export class PredictComponent implements OnInit {
     'Montgomery',
     'Wilson',
     'Blount',
+    'Anderson',
+    'Bedford',
   ];
   // Selected county for predictions
   selectedCounty: string = 'Davidson';
   // Latest prediction result
   lastPrediction: PredictionResult | null = null;
+  // Last updated timestamp
+  lastUpdated: string = '';
 
   modelOptions: ModelOption[] = [
     {
@@ -195,6 +200,7 @@ export class PredictComponent implements OnInit {
         this.currentWeather = data;
         this.selectedCounty = county;
         this.isWeatherRefreshing = false;
+        this.lastUpdated = data.lastUpdated || new Date().toISOString();
 
         // Make a prediction based on the new weather data
         this.makePrediction(data);
@@ -213,6 +219,7 @@ export class PredictComponent implements OnInit {
     this.predictionService.predict(weatherData).subscribe({
       next: (result) => {
         this.lastPrediction = result;
+        this.lastUpdated = result.lastUpdated || this.lastUpdated;
 
         // If this was triggered by a user action, send a response
         if (this.isLoading) {
@@ -238,6 +245,7 @@ export class PredictComponent implements OnInit {
     const county = weather.county || this.selectedCounty;
     const outageStatus = prediction.outage_likely ? 'HIGH RISK' : 'Low risk';
     const probability = Math.round(prediction.probability * 100);
+    const formattedDate = this.formatDateTime(this.lastUpdated);
 
     let response = `**${county} County Power Outage Forecast**\n\n`;
     response += `Status: **${outageStatus}**\n`;
@@ -251,7 +259,13 @@ export class PredictComponent implements OnInit {
     response += `Temperature: ${weather.temperature}°F\n`;
     response += `Wind: ${weather.windSpeed} mph (gusts to ${weather.windGust} mph)\n`;
     response += `Humidity: ${weather.relativeHumidity}%\n`;
-    response += `Precipitation chance: ${weather.precipitationChance}%\n\n`;
+    response += `Precipitation chance: ${weather.precipitationChance}%\n`;
+
+    if (weather.weatherDescription) {
+      response += `Conditions: ${weather.weatherDescription}\n`;
+    }
+
+    response += `\n`;
 
     if (prediction.risk_factors.length > 0) {
       response += `**Risk Factors**\n`;
@@ -261,9 +275,29 @@ export class PredictComponent implements OnInit {
       response += '\n';
     }
 
-    response += `**Recommendation**\n${prediction.recommendation}`;
+    response += `**Recommendation**\n${prediction.recommendation}\n\n`;
+
+    response += `Last updated: ${formattedDate}`;
 
     return response;
+  }
+
+  formatDateTime(dateString: string): string {
+    if (!dateString) return 'N/A';
+
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      });
+    } catch (error) {
+      return dateString;
+    }
   }
 
   handleWeatherQuestion(message: string): void {
