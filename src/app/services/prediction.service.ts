@@ -47,6 +47,11 @@ export class PredictionService {
       weatherData.hour = now.getHours();
     }
 
+    if (!weatherData.county) {
+      weatherData.county = "Davidson"
+    }
+    
+
     console.log('Sending prediction request with data:', weatherData);
 
     return this.http
