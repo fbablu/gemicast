@@ -1,647 +1,340 @@
-<div class="profile-container">
-  <!-- Loading overlay -->
-  <div class="loading-overlay" *ngIf="isLoading">
-    <mat-spinner diameter="48"></mat-spinner>
-    <p class="loading-message">{{ loadingMessage }}</p>
-  </div>
+<div class="min-h-screen bg-gray-100 p-6">
+  <div class="bg-white rounded-lg shadow-md p-6 max-w-2xl mx-auto">
+    <!-- User Profile Section -->
+    <div *ngIf="!selectedOrg" class="mb-8">
+      <h2 class="text-2xl font-bold mb-4 text-blue-700">Your Profile</h2>
 
-  <!-- User not logged in -->
-  <mat-card *ngIf="!phoneNumber" class="user-form-card">
-    <mat-card-header>
-      <mat-card-title>
-        <mat-icon class="header-icon">account_circle</mat-icon>
-        Create Your Profile
-      </mat-card-title>
-      <mat-card-subtitle
-        >Enter your details to get started with outage alerts</mat-card-subtitle
-      >
-    </mat-card-header>
-
-    <mat-card-content>
-      <form [formGroup]="userForm" (ngSubmit)="saveUserInfo()">
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Phone Number</mat-label>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-gray-700 font-medium mb-2">Name</label>
           <input
-            matInput
-            formControlName="phoneNumber"
-            placeholder="10-digit phone number"
-            type="tel"
-            maxlength="10"
+            type="text"
+            [(ngModel)]="userName"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your name"
           />
-          <mat-icon matSuffix>phone</mat-icon>
-          <mat-error *ngIf="userForm.get('phoneNumber')?.hasError('required')">
-            Phone number is required
-          </mat-error>
-          <mat-error *ngIf="userForm.get('phoneNumber')?.hasError('pattern')">
-            Please enter a valid 10-digit phone number
-          </mat-error>
-        </mat-form-field>
+        </div>
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Your Name</mat-label>
-          <input
-            matInput
-            formControlName="userName"
-            placeholder="Your full name"
-          />
-          <mat-icon matSuffix>person</mat-icon>
-          <mat-error *ngIf="userForm.get('userName')?.hasError('required')">
-            Name is required
-          </mat-error>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Email (Optional)</mat-label>
-          <input
-            matInput
-            formControlName="email"
-            placeholder="Your email address"
-            type="email"
-          />
-          <mat-icon matSuffix>email</mat-icon>
-          <mat-error *ngIf="userForm.get('email')?.hasError('email')">
-            Please enter a valid email address
-          </mat-error>
-        </mat-form-field>
-
-        <mat-checkbox formControlName="receiveTexts" color="primary">
-          Receive outage alerts via text message
-        </mat-checkbox>
-
-        <div class="form-actions">
-          <button
-            mat-raised-button
-            color="primary"
-            type="submit"
-            [disabled]="userForm.invalid"
+        <div>
+          <label class="block text-gray-700 font-medium mb-2"
+            >Phone Number</label
           >
-            <mat-icon>save</mat-icon> Save Profile
+          <input
+            type="text"
+            [(ngModel)]="phoneNumber"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your phone number"
+          />
+        </div>
+
+        <div>
+          <label class="block text-gray-700 font-medium mb-2"
+            >Email (Optional)</label
+          >
+          <input
+            type="email"
+            [(ngModel)]="email"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your email"
+          />
+        </div>
+
+        <div class="flex items-center">
+          <input
+            type="checkbox"
+            [(ngModel)]="receiveTexts"
+            id="receiveTexts"
+            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          />
+          <label for="receiveTexts" class="ml-2 block text-gray-700">
+            Receive outage alerts via text message
+          </label>
+        </div>
+
+        <button
+          (click)="saveUserInfo()"
+          [disabled]="isLoading"
+          class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+        >
+          <span *ngIf="isLoading">Saving...</span>
+          <span *ngIf="!isLoading">Save Profile</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Organization Management Section -->
+    <div *ngIf="!selectedOrg" class="border-t border-gray-200 pt-6">
+      <h2 class="text-2xl font-bold mb-4 text-blue-700">Your Organizations</h2>
+
+      <div
+        *ngIf="!organizations.length && !isCreatingOrg && !isJoiningOrg"
+        class="text-center py-8"
+      >
+        <p class="text-gray-500 mb-4">
+          You haven't joined any organizations yet
+        </p>
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+          <button
+            (click)="isCreatingOrg = true"
+            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            Create Organization
+          </button>
+          <button
+            (click)="isJoiningOrg = true"
+            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+          >
+            Join Organization
           </button>
         </div>
-      </form>
-    </mat-card-content>
-  </mat-card>
-
-  <!-- User logged in - Organization Dashboard -->
-  <div *ngIf="phoneNumber" class="dashboard-container">
-    <!-- Organization selection panel (only shown when not viewing a specific org) -->
-    <div *ngIf="!selectedOrg" class="org-selection-panel">
-      <div class="user-info-panel">
-        <mat-card>
-          <mat-card-content>
-            <div class="user-profile-summary">
-              <div class="avatar-container">
-                <div class="avatar">{{ userName.charAt(0) }}</div>
-              </div>
-              <div class="user-details">
-                <h2>{{ userName }}</h2>
-                <p>{{ phoneNumber }}</p>
-                <p *ngIf="email">{{ email }}</p>
-                <button
-                  mat-stroked-button
-                  (click)="
-                    userForm.patchValue({
-                      phoneNumber: phoneNumber,
-                      userName: userName,
-                      email: email,
-                      receiveTexts: receiveTexts,
-                    });
-                    saveUserInfo()
-                  "
-                >
-                  <mat-icon>edit</mat-icon> Update Profile
-                </button>
-              </div>
-            </div>
-          </mat-card-content>
-        </mat-card>
       </div>
 
-      <div class="org-header">
-        <h2>Your Organizations</h2>
-        <div class="org-actions">
+      <div
+        *ngIf="organizations.length && !isCreatingOrg && !isJoiningOrg"
+        class="space-y-4"
+      >
+        <div
+          *ngFor="let org of organizations"
+          class="border border-gray-200 rounded-md p-4 hover:bg-gray-50 cursor-pointer"
+          (click)="selectOrganization(org)"
+        >
+          <h3 class="font-bold text-lg">{{ org.name }}</h3>
+          <p class="text-gray-600 text-sm">{{ org.description }}</p>
+          <div class="mt-2 text-xs text-gray-500">
+            <span
+              *ngIf="org.adminPhone === phoneNumber"
+              class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full"
+              >Admin</span
+            >
+            <span class="ml-2">Created: {{ org.createdAt | date }}</span>
+          </div>
+        </div>
+
+        <div class="flex gap-4 mt-6">
           <button
-            mat-stroked-button
-            color="primary"
-            (click)="isJoiningOrg = true; isCreatingOrg = false"
-            class="action-button"
+            (click)="isCreatingOrg = true"
+            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
-            <mat-icon>group_add</mat-icon> Join Organization
+            Create Organization
           </button>
           <button
-            mat-raised-button
-            color="primary"
-            (click)="isCreatingOrg = true; isJoiningOrg = false"
-            class="action-button"
+            (click)="isJoiningOrg = true"
+            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
           >
-            <mat-icon>add_circle</mat-icon> Create New
+            Join Organization
           </button>
         </div>
       </div>
 
       <!-- Create Organization Form -->
-      <mat-card *ngIf="isCreatingOrg" class="org-form-card">
-        <mat-card-header>
-          <mat-card-title>Create New Organization</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <form [formGroup]="newOrgForm" (ngSubmit)="createOrganization()">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Organization Name</mat-label>
-              <input
-                matInput
-                formControlName="name"
-                placeholder="Enter organization name"
-              />
-              <mat-error *ngIf="newOrgForm.get('name')?.hasError('required')">
-                Organization name is required
-              </mat-error>
-            </mat-form-field>
+      <div
+        *ngIf="isCreatingOrg"
+        class="border border-gray-200 rounded-md p-6 bg-gray-50"
+      >
+        <h3 class="font-bold text-lg mb-4">Create New Organization</h3>
 
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Description</mat-label>
-              <textarea
-                matInput
-                formControlName="description"
-                placeholder="Describe your organization"
-                rows="3"
-              ></textarea>
-            </mat-form-field>
-
-            <div class="form-actions">
-              <button
-                mat-stroked-button
-                type="button"
-                (click)="isCreatingOrg = false"
-              >
-                Cancel
-              </button>
-              <button
-                mat-raised-button
-                color="primary"
-                type="submit"
-                [disabled]="newOrgForm.invalid"
-              >
-                <mat-icon>save</mat-icon> Create Organization
-              </button>
-            </div>
-          </form>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Join Organization Form -->
-      <mat-card *ngIf="isJoiningOrg" class="org-form-card">
-        <mat-card-header>
-          <mat-card-title>Join an Organization</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <form [formGroup]="joinForm" (ngSubmit)="joinOrganization()">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Join Code</mat-label>
-              <input
-                matInput
-                formControlName="joinCode"
-                placeholder="Enter organization join code"
-              />
-              <mat-icon matSuffix>vpn_key</mat-icon>
-              <mat-error *ngIf="joinForm.get('joinCode')?.hasError('required')">
-                Join code is required
-              </mat-error>
-            </mat-form-field>
-
-            <div class="form-actions">
-              <button
-                mat-stroked-button
-                type="button"
-                (click)="isJoiningOrg = false"
-              >
-                Cancel
-              </button>
-              <button
-                mat-raised-button
-                color="primary"
-                type="submit"
-                [disabled]="joinForm.invalid"
-              >
-                <mat-icon>group_add</mat-icon> Join Organization
-              </button>
-            </div>
-          </form>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Organization List -->
-      <div class="org-list" *ngIf="organizations.length > 0">
-        <mat-card
-          *ngFor="let org of organizations"
-          class="org-card"
-          (click)="selectOrganization(org)"
-        >
-          <mat-card-header>
-            <div mat-card-avatar class="org-avatar">
-              {{ org.name.charAt(0) }}
-            </div>
-            <mat-card-title>{{ org.name }}</mat-card-title>
-            <mat-card-subtitle
-              >Created: {{ formatDatetime(org.createdAt) }}</mat-card-subtitle
+        <div class="space-y-4">
+          <div>
+            <label class="block text-gray-700 font-medium mb-2"
+              >Organization Name</label
             >
-          </mat-card-header>
-          <mat-card-content>
-            <p class="org-description">{{ org.description }}</p>
-            <div class="org-stats">
-              <div class="stat-item">
-                <mat-icon>group</mat-icon>
-                <span>{{ org.memberCount || 0 }} Members</span>
-              </div>
-              <div class="stat-item">
-                <mat-icon>notifications</mat-icon>
-                <span>{{ org.alertsCount || 0 }} Alerts</span>
-              </div>
-            </div>
-          </mat-card-content>
-          <mat-card-actions align="end">
-            <button mat-button color="primary">
-              <mat-icon>visibility</mat-icon> View
+            <input
+              type="text"
+              [(ngModel)]="newOrgName"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter organization name"
+            />
+          </div>
+
+          <div>
+            <label class="block text-gray-700 font-medium mb-2"
+              >Description</label
+            >
+            <textarea
+              [(ngModel)]="newOrgDescription"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Describe your organization"
+              rows="3"
+            ></textarea>
+          </div>
+
+          <div class="flex gap-4">
+            <button
+              (click)="createOrganization()"
+              [disabled]="isLoading || !newOrgName"
+              class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+            >
+              <span *ngIf="isLoading">Creating...</span>
+              <span *ngIf="!isLoading">Create</span>
             </button>
-          </mat-card-actions>
-        </mat-card>
+            <button
+              (click)="isCreatingOrg = false"
+              class="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       </div>
 
-      <!-- No organizations message -->
+      <!-- Join Organization Form -->
       <div
-        *ngIf="organizations.length === 0 && !isCreatingOrg && !isJoiningOrg"
-        class="no-orgs-message"
+        *ngIf="isJoiningOrg"
+        class="border border-gray-200 rounded-md p-6 bg-gray-50"
       >
-        <mat-icon class="large-icon">groups</mat-icon>
-        <h3>No Organizations Yet</h3>
-        <p>
-          Create an organization to manage outage alerts or join an existing one
-          using a join code.
-        </p>
+        <h3 class="font-bold text-lg mb-4">Join an Organization</h3>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-gray-700 font-medium mb-2"
+              >Enter Join Code</label
+            >
+            <input
+              type="text"
+              [(ngModel)]="joinCode"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter join code"
+            />
+          </div>
+
+          <div class="flex gap-4">
+            <button
+              (click)="joinOrganization()"
+              [disabled]="isLoading || !joinCode"
+              class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
+            >
+              <span *ngIf="isLoading">Joining...</span>
+              <span *ngIf="!isLoading">Join</span>
+            </button>
+            <button
+              (click)="isJoiningOrg = false"
+              class="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Organization Dashboard (shown when viewing a specific org) -->
-    <div *ngIf="selectedOrg" class="org-dashboard">
-      <div class="dashboard-header">
-        <div class="back-button">
+    <!-- Organization Detail View -->
+    <div *ngIf="selectedOrg">
+      <div class="flex items-center mb-6">
+        <button
+          (click)="backToOrgList()"
+          class="mr-3 text-blue-600 hover:text-blue-800 focus:outline-none"
+        >
+          ← Back
+        </button>
+        <h2 class="text-2xl font-bold text-blue-700">{{ selectedOrg.name }}</h2>
+      </div>
+
+      <div class="bg-blue-50 p-4 rounded-md mb-6">
+        <p class="text-gray-700">{{ selectedOrg.description }}</p>
+        <p class="text-sm text-gray-500 mt-2">
+          Created on {{ selectedOrg.createdAt | date }}
+        </p>
+      </div>
+
+      <!-- Notification Controls -->
+      <div class="border border-gray-200 rounded-md p-4 mb-6">
+        <h3 class="font-bold text-lg mb-4">Send Notifications</h3>
+
+        <div class="flex flex-col sm:flex-row gap-4">
           <button
-            mat-icon-button
-            (click)="backToOrgList()"
-            matTooltip="Back to Organizations"
+            (click)="sendTestNotification()"
+            [disabled]="isLoading"
+            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
           >
-            <mat-icon>arrow_back</mat-icon>
+            Send Test Notification
           </button>
-        </div>
-        <div class="org-title">
-          <h1>{{ selectedOrg.name }}</h1>
-          <p class="org-subtitle">{{ selectedOrg.description }}</p>
-        </div>
-        <div class="org-actions">
+
           <button
-            mat-stroked-button
-            color="primary"
-            (click)="refreshData()"
-            matTooltip="Refresh Data"
+            (click)="sendOutageAlert()"
+            [disabled]="isLoading"
+            class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
           >
-            <mat-icon>refresh</mat-icon>
+            Send Outage Alert
           </button>
         </div>
       </div>
 
-      <div class="dashboard-stats">
-        <div class="stat-card">
-          <div class="stat-icon member-icon">
-            <mat-icon>group</mat-icon>
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ members.length }}</div>
-            <div class="stat-label">Members</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon alert-icon">
-            <mat-icon>notifications</mat-icon>
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ recentAlerts.length }}</div>
-            <div class="stat-label">Recent Alerts</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div
-            class="stat-icon admin-icon"
-            *ngIf="selectedOrg.adminPhone === phoneNumber"
+      <!-- Invite Members -->
+      <div class="border border-gray-200 rounded-md p-4 mb-6">
+        <h3 class="font-bold text-lg mb-4">Invite Members</h3>
+
+        <div class="mb-4">
+          <label class="block text-gray-700 font-medium mb-2"
+            >Share this link or code</label
           >
-            <mat-icon>admin_panel_settings</mat-icon>
-          </div>
-          <div
-            class="stat-icon member-icon"
-            *ngIf="selectedOrg.adminPhone !== phoneNumber"
-          >
-            <mat-icon>person</mat-icon>
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">
-              {{ selectedOrg.adminPhone === phoneNumber ? "Admin" : "Member" }}
-            </div>
-            <div class="stat-label">Your Role</div>
+          <div class="flex">
+            <input
+              type="text"
+              [value]="shareableLink"
+              class="flex-grow px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              readonly
+            />
+            <button
+              (click)="copyShareableLink()"
+              class="bg-blue-600 text-white px-4 py-2 rounded-r-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              Copy
+            </button>
           </div>
         </div>
       </div>
 
-      <mat-tab-group
-        [(selectedIndex)]="activeTab"
-        animationDuration="300ms"
-        class="dashboard-tabs"
-      >
-        <!-- Members Tab -->
-        <mat-tab>
-          <ng-template mat-tab-label>
-            <mat-icon class="tab-icon">group</mat-icon>
-            <span class="tab-label">Members</span>
-          </ng-template>
+      <!-- Members List -->
+      <div>
+        <h3 class="font-bold text-lg mb-4">Members ({{ members.length }})</h3>
 
-          <div class="tab-actions">
-            <button
-              mat-raised-button
-              color="primary"
-              (click)="openAddMemberDialog()"
-              *ngIf="selectedOrg.adminPhone === phoneNumber"
-            >
-              <mat-icon>person_add</mat-icon> Add Members
-            </button>
-          </div>
-
-          <div class="table-container">
-            <table
-              mat-table
-              [dataSource]="members"
-              class="mat-elevation-z2 full-width"
-            >
-              <!-- Name Column -->
-              <ng-container matColumnDef="name">
-                <th mat-header-cell *matHeaderCellDef>Name</th>
-                <td mat-cell *matCellDef="let member">
-                  {{ member.name }}
-                  <mat-icon
-                    *ngIf="member.isAdmin"
-                    class="admin-badge"
-                    matTooltip="Admin"
-                    >verified_user</mat-icon
+        <div class="overflow-x-auto">
+          <table class="min-w-full bg-white border border-gray-200">
+            <thead>
+              <tr>
+                <th class="py-2 px-4 border-b text-left">Name</th>
+                <th class="py-2 px-4 border-b text-left">Phone</th>
+                <th class="py-2 px-4 border-b text-left">Email</th>
+                <th class="py-2 px-4 border-b text-left">Joined</th>
+                <th class="py-2 px-4 border-b text-left">Notifications</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let member of members" class="hover:bg-gray-50">
+                <td class="py-2 px-4 border-b">{{ member.name }}</td>
+                <td class="py-2 px-4 border-b">{{ member.phone }}</td>
+                <td class="py-2 px-4 border-b">{{ member.email || "N/A" }}</td>
+                <td class="py-2 px-4 border-b">{{ member.joinedAt | date }}</td>
+                <td class="py-2 px-4 border-b">
+                  <span
+                    *ngIf="member.receiveNotifications"
+                    class="text-green-600"
+                    >Enabled</span
+                  >
+                  <span
+                    *ngIf="!member.receiveNotifications"
+                    class="text-red-600"
+                    >Disabled</span
                   >
                 </td>
-              </ng-container>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-              <!-- Phone Column -->
-              <ng-container matColumnDef="phone">
-                <th mat-header-cell *matHeaderCellDef>Phone</th>
-                <td mat-cell *matCellDef="let member">{{ member.phone }}</td>
-              </ng-container>
-
-              <!-- Email Column -->
-              <ng-container matColumnDef="email">
-                <th mat-header-cell *matHeaderCellDef>Email</th>
-                <td mat-cell *matCellDef="let member">
-                  {{ member.email || "-" }}
-                </td>
-              </ng-container>
-
-              <!-- Joined Date Column -->
-              <ng-container matColumnDef="joinedAt">
-                <th mat-header-cell *matHeaderCellDef>Joined</th>
-                <td mat-cell *matCellDef="let member">
-                  {{ formatDatetime(member.joinedAt) }}
-                </td>
-              </ng-container>
-
-              <!-- Notifications Column -->
-              <ng-container matColumnDef="notifications">
-                <th mat-header-cell *matHeaderCellDef>Notifications</th>
-                <td mat-cell *matCellDef="let member">
-                  <mat-chip-listbox>
-                    <mat-chip
-                      color="{{
-                        member.receiveNotifications ? 'primary' : 'warn'
-                      }}"
-                      selected
-                    >
-                      {{ member.receiveNotifications ? "Enabled" : "Disabled" }}
-                    </mat-chip>
-                  </mat-chip-listbox>
-                </td>
-              </ng-container>
-
-              <!-- Actions Column -->
-              <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef>Actions</th>
-                <td mat-cell *matCellDef="let member">
-                  <button
-                    mat-icon-button
-                    color="primary"
-                    (click)="toggleMemberNotifications(member)"
-                    matTooltip="{{
-                      member.receiveNotifications
-                        ? 'Disable notifications'
-                        : 'Enable notifications'
-                    }}"
-                    *ngIf="selectedOrg?.adminPhone === phoneNumber"
-                  >
-                    <mat-icon>{{
-                      member.receiveNotifications
-                        ? "notifications_off"
-                        : "notifications"
-                    }}</mat-icon>
-                  </button>
-                </td>
-              </ng-container>
-
-              <tr mat-header-row *matHeaderRowDef="displayedMemberColumns"></tr>
-              <tr
-                mat-row
-                *matRowDef="let row; columns: displayedMemberColumns"
-              ></tr>
-            </table>
-          </div>
-        </mat-tab>
-
-        <!-- Alerts Tab -->
-        <mat-tab>
-          <ng-template mat-tab-label>
-            <mat-icon class="tab-icon">notifications</mat-icon>
-            <span class="tab-label">Alerts</span>
-          </ng-template>
-
-          <div class="tab-actions">
-            <button
-              mat-raised-button
-              color="primary"
-              (click)="openCreateAlertDialog()"
-            >
-              <mat-icon>notification_important</mat-icon> Send Alert
-            </button>
-          </div>
-
-          <div class="table-container">
-            <table
-              mat-table
-              [dataSource]="recentAlerts"
-              class="mat-elevation-z2 full-width"
-            >
-              <!-- Severity Column -->
-              <ng-container matColumnDef="severity">
-                <th mat-header-cell *matHeaderCellDef>Severity</th>
-                <td mat-cell *matCellDef="let alert">
-                  <div
-                    class="severity-indicator"
-                    [style.background-color]="getAlertColor(alert.severity)"
-                  >
-                    <mat-icon>{{ getAlertIcon(alert.severity) }}</mat-icon>
-                  </div>
-                </td>
-              </ng-container>
-
-              <!-- Title Column -->
-              <ng-container matColumnDef="title">
-                <th mat-header-cell *matHeaderCellDef>Alert</th>
-                <td mat-cell *matCellDef="let alert">
-                  <div class="alert-title">{{ alert.title }}</div>
-                  <div class="alert-message">{{ alert.message }}</div>
-                </td>
-              </ng-container>
-
-              <!-- Sent At Column -->
-              <ng-container matColumnDef="sentAt">
-                <th mat-header-cell *matHeaderCellDef>Sent</th>
-                <td mat-cell *matCellDef="let alert">
-                  {{ formatDatetime(alert.sentAt) }}
-                </td>
-              </ng-container>
-
-              <!-- Sent By Column -->
-              <ng-container matColumnDef="sentBy">
-                <th mat-header-cell *matHeaderCellDef>Sent By</th>
-                <td mat-cell *matCellDef="let alert">
-                  {{ alert.sentByName || alert.sentBy }}
-                </td>
-              </ng-container>
-
-              <!-- Recipients Column -->
-              <ng-container matColumnDef="recipientCount">
-                <th mat-header-cell *matHeaderCellDef>Recipients</th>
-                <td mat-cell *matCellDef="let alert">
-                  {{ alert.recipientCount }}
-                </td>
-              </ng-container>
-
-              <tr mat-header-row *matHeaderRowDef="displayedAlertColumns"></tr>
-              <tr
-                mat-row
-                *matRowDef="let row; columns: displayedAlertColumns"
-              ></tr>
-            </table>
-
-            <!-- No alerts message -->
-            <div *ngIf="recentAlerts.length === 0" class="no-data-message">
-              <mat-icon>notifications_none</mat-icon>
-              <p>No alerts have been sent yet</p>
-            </div>
-          </div>
-        </mat-tab>
-
-        <!-- Google Sheets Integration Tab -->
-        <mat-tab>
-          <ng-template mat-tab-label>
-            <mat-icon class="tab-icon">table_chart</mat-icon>
-            <span class="tab-label">Data Sync</span>
-          </ng-template>
-
-          <div class="google-sheets-tab">
-            <div class="integration-card">
-              <div class="integration-icon">
-                <img
-                  src="assets/sheets-icon.png"
-                  alt="Google Sheets"
-                  onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Google_Sheets_logo_%282014-2020%29.svg/175px-Google_Sheets_logo_%282014-2020%29.svg.png'; this.onerror=null;"
-                />
-              </div>
-
-              <div class="integration-content">
-                <h2>Google Sheets Integration</h2>
-                <p>
-                  Connect to Google Sheets to automatically store your
-                  organization's members and alerts data.
-                </p>
-
-                <div *ngIf="!isGoogleSheetsConnected" class="connect-button">
-                  <button
-                    mat-raised-button
-                    color="primary"
-                    (click)="connectGoogleSheets()"
-                  >
-                    <mat-icon>link</mat-icon> Connect Google Sheets
-                  </button>
-                </div>
-
-                <div *ngIf="isGoogleSheetsConnected" class="connected-status">
-                  <mat-icon class="connected-icon">check_circle</mat-icon>
-                  <span>Connected to Google Sheets</span>
-
-                  <div class="sync-details">
-                    <div class="sync-item">
-                      <div class="sync-label">Members Spreadsheet:</div>
-                      <div class="sync-value">Organization Members</div>
-                    </div>
-                    <div class="sync-item">
-                      <div class="sync-label">Alerts Spreadsheet:</div>
-                      <div class="sync-value">Organization Alerts</div>
-                    </div>
-                    <div class="sync-item">
-                      <div class="sync-label">Last Synced:</div>
-                      <div class="sync-value">{{ formatDate() }}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <mat-divider></mat-divider>
-
-            <div class="sync-instructions" *ngIf="isGoogleSheetsConnected">
-              <h3>Data Synced to Google Sheets</h3>
-              <p>
-                The following data is automatically synced to your Google
-                Sheets:
-              </p>
-
-              <div class="sync-tables">
-                <div class="sync-table">
-                  <h4>Members</h4>
-                  <ul>
-                    <li>Name</li>
-                    <li>Phone Number</li>
-                    <li>Email</li>
-                    <li>Join Date</li>
-                    <li>Notification Status</li>
-                  </ul>
-                </div>
-
-                <div class="sync-table">
-                  <h4>Alerts</h4>
-                  <ul>
-                    <li>Title</li>
-                    <li>Message</li>
-                    <li>Severity</li>
-                    <li>Sent Date</li>
-                    <li>Sent By</li>
-                    <li>Recipients Count</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </mat-tab>
-      </mat-tab-group>
+    <!-- Status Message -->
+    <div
+      *ngIf="showMessage"
+      [ngClass]="{
+        'bg-green-100 border-green-500 text-green-900':
+          messageType === 'success',
+        'bg-red-100 border-red-500 text-red-900': messageType === 'error',
+      }"
+      class="fixed bottom-4 right-4 px-4 py-3 border-l-4 rounded shadow-md"
+    >
+      {{ message }}
     </div>
   </div>
 </div>

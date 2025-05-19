@@ -1,29 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  FormsModule,
-  ReactiveFormsModule,
-  FormGroup,
-  FormBuilder,
-  Validators,
-} from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDividerModule } from '@angular/material/divider';
-
-// Firebase imports
-import { initializeApp } from 'firebase/app';
+import { FormsModule } from '@angular/forms';
+import { initializeApp } from '@firebase/app';
 import {
   getFirestore,
   collection,
@@ -33,98 +11,51 @@ import {
   query,
   where,
   getDocs,
-  getDoc,
-  updateDoc,
-  serverTimestamp,
-  Timestamp,
-  orderBy,
-  limit,
-} from 'firebase/firestore';
+} from '@firebase/firestore';
 
-// Google Sheets API (optional - for later integration)
-import { HttpClientModule, HttpClient } from '@angular/common/http';
+import { getAuth, signInAnonymously } from 'firebase/auth';
 
-// Import dialog components (we'll create these later)
-import { AddMemberDialogComponent } from './dialogs/add-member-dialog.component';
-import { CreateAlertDialogComponent } from './dialogs/create-alert-dialog.component';
-import { FirebaseService } from '../../services/firebase.service';
-
-// Your new Firebase configuration
+// Firebase configuration
 const firebaseConfig = {
-  apiKey: 'AIzaSyDrTRNc6bh0W3kEwTHLQPlXo1VL_6Kjn9Y',
-  authDomain: 'gemicast-eac3e.firebaseapp.com',
-  projectId: 'gemicast-eac3e',
-  storageBucket: 'gemicast-eac3e.firebasestorage.app',
-  messagingSenderId: '206031573739',
-  appId: '1:206031573739:web:5367867a48d4a0db0764ae',
-  measurementId: 'G-0SB35Y09GH',
+  apiKey: 'AIzaSyD1TfLL2Sdfomsf1y_WlAGBW_SUNPUkKic',
+  authDomain: 'voltennplatform.firebaseapp.com',
+  databaseURL: 'https://voltennplatform-default-rtdb.firebaseio.com',
+  projectId: 'voltennplatform',
+  storageBucket: 'voltennplatform.firebasestorage.app',
+  messagingSenderId: '716984582044',
+  appId: '1:716984582044:web:2e37973cab597e7bf39259',
+  measurementId: 'G-9YSSLP8S69',
 };
 
-// Interfaces
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 interface Organization {
   id: string;
   name: string;
   description: string;
   createdAt: Date;
   adminPhone: string;
-  memberCount?: number;
-  alertsCount?: number;
 }
 
 interface Member {
-  id?: string;
   phone: string;
   name: string;
   email?: string;
   joinedAt: Date;
   receiveNotifications: boolean;
-  isAdmin?: boolean;
-}
-
-interface Alert {
-  id?: string;
-  title: string;
-  message: string;
-  severity: 'info' | 'warning' | 'high' | 'critical';
-  sentAt: Date;
-  sentBy: string;
-  sentByName?: string;
-  recipientCount?: number;
-  status?: 'sending' | 'sent' | 'failed';
 }
 
 @Component({
   selector: 'app-profile',
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.css'],
+  imports: [CommonModule, FormsModule],
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    MatCardModule,
-    MatButtonModule,
-    MatInputModule,
-    MatFormFieldModule,
-    MatCheckboxModule,
-    MatTabsModule,
-    MatIconModule,
-    MatTableModule,
-    MatProgressSpinnerModule,
-    MatDialogModule,
-    MatSnackBarModule,
-    MatChipsModule,
-    MatTooltipModule,
-    MatDividerModule,
-    HttpClientModule,
-  ],
 })
-export class ProfileComponent implements OnInit {
-  private app: any;
-  private db: any;
-
+export class ProfileComponent {
   // User info
-  userForm: FormGroup;
   phoneNumber: string = '';
   userName: string = '';
   email: string = '';
@@ -133,171 +64,109 @@ export class ProfileComponent implements OnInit {
   // Organization info
   organizations: Organization[] = [];
   selectedOrg: Organization | null = null;
-  newOrgForm: FormGroup;
-  joinForm: FormGroup;
+  newOrgName: string = '';
+  newOrgDescription: string = '';
 
   // Organization members
   members: Member[] = [];
-  displayedMemberColumns: string[] = [
-    'name',
-    'phone',
-    'email',
-    'joinedAt',
-    'notifications',
-    'actions',
-  ];
-
-  // Alerts/Notifications
-  recentAlerts: Alert[] = [];
-  displayedAlertColumns: string[] = [
-    'severity',
-    'title',
-    'sentAt',
-    'sentBy',
-    'recipientCount',
-  ];
 
   // UI state
-  activeTab = 0;
   isCreatingOrg: boolean = false;
   isJoiningOrg: boolean = false;
+  joinCode: string = '';
   isLoading: boolean = false;
-  loadingMessage: string = '';
+  message: string = '';
+  showMessage: boolean = false;
+  messageType: 'success' | 'error' = 'success';
 
-  // Google Sheets sync status (for future implementation)
-  isGoogleSheetsConnected: boolean = false;
-  new: any = null;
+  // Sharing info
+  shareableLink: string = '';
+  showShareLink: boolean = false;
 
-  constructor(
-    private fb: FormBuilder,
-    private dialog: MatDialog,
-    private snackBar: MatSnackBar,
-    private http: HttpClient,
-  ) {
-    // Create forms first
-    this.userForm = this.fb.group({
-      phoneNumber: [
-        '',
-        [Validators.required, Validators.pattern('^[0-9]{10}$')],
-      ],
-      userName: ['', Validators.required],
-      email: ['', [Validators.email]],
-      receiveTexts: [true],
-    });
-
-    this.newOrgForm = this.fb.group({
-      name: ['', Validators.required],
-      description: [''],
-    });
-
-    this.joinForm = this.fb.group({
-      joinCode: ['', Validators.required],
-    });
-  }
-
-  formatDate(): string {
-    return this.formatDatetime(new Date());
-  }
-
-  ngOnInit(): void {
-    // Initialize Firebase only in ngOnInit
-    try {
-      this.app = initializeApp(firebaseConfig);
-      this.db = getFirestore(this.app);
-
-      // Check saved user info
-      const savedPhone = localStorage.getItem('userPhone');
-      if (savedPhone) {
-        this.phoneNumber = savedPhone;
-        this.userForm.patchValue({ phoneNumber: savedPhone });
-        // Temporarily comment out Firebase operations
-        // this.loadUserData();
-      }
-    } catch (error) {
-      console.error('Firebase initialization error:', error);
+  constructor() {
+    // Check if we have saved user info
+    const savedPhone = localStorage.getItem('userPhone');
+    if (savedPhone) {
+      this.phoneNumber = savedPhone;
+      this.loadUserData();
     }
+
+    const auth = getAuth(app);
+    signInAnonymously(auth)
+      .then((userCredential) => {
+        console.log('✅ Signed in as anonymous user:', userCredential.user.uid);
+      })
+      .catch((error) => {
+        console.error('❌ Anonymous sign-in failed:', error);
+      });
   }
 
   async saveUserInfo() {
-    if (this.userForm.invalid) {
-      this.showSnackBar('Please fill in all required fields correctly');
+    if (!this.phoneNumber) {
+      this.showErrorMessage('Please enter a phone number');
       return;
     }
 
-    const formData = this.userForm.value;
-    this.phoneNumber = formData.phoneNumber;
-    this.userName = formData.userName;
-    this.email = formData.email;
-    this.receiveTexts = formData.receiveTexts;
-
-    this.showLoading('Saving profile...');
-
     try {
+      this.isLoading = true;
+
       // Save to Firestore
-      await setDoc(doc(this.db, 'users', this.phoneNumber), {
+      await setDoc(doc(db, 'users', this.phoneNumber), {
         phone: this.phoneNumber,
-        name: this.userName,
+        name: this.userName || 'Anonymous User',
         email: this.email || '',
         receiveNotifications: this.receiveTexts,
-        updatedAt: serverTimestamp(),
+        updatedAt: new Date(),
       });
 
       // Save locally
       localStorage.setItem('userPhone', this.phoneNumber);
 
-      this.showSnackBar('Profile updated successfully!');
+      this.showSuccessMessage('Profile updated successfully!');
+
+      // Load user's organizations
       this.loadUserOrganizations();
     } catch (e) {
       console.error('Error saving user info:', e);
-      this.showSnackBar('Error saving profile', 'error');
+      this.showErrorMessage('Error saving profile');
     } finally {
-      this.hideLoading();
+      this.isLoading = false;
     }
   }
 
   async loadUserData() {
-    this.showLoading('Loading profile...');
-
     try {
       // Load user data from Firestore
-      const userDoc = await getDoc(doc(this.db, 'users', this.phoneNumber));
+      const userRef = doc(db, 'users', this.phoneNumber);
+      const userDoc = await getDocs(
+        query(collection(db, 'users'), where('phone', '==', this.phoneNumber)),
+      );
 
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
+      if (!userDoc.empty) {
+        const userData = userDoc.docs[0].data();
         this.userName = userData['name'] || '';
         this.email = userData['email'] || '';
-        this.receiveTexts = userData['receiveNotifications'] !== false;
-
-        // Update form
-        this.userForm.patchValue({
-          userName: this.userName,
-          email: this.email,
-          receiveTexts: this.receiveTexts,
-        });
+        this.receiveTexts = userData['receiveNotifications'] !== false; // Default to true
       }
 
       // Load user's organizations
-      await this.loadUserOrganizations();
+      this.loadUserOrganizations();
     } catch (e) {
       console.error('Error loading user data:', e);
-      this.showSnackBar('Error loading profile data', 'error');
-    } finally {
-      this.hideLoading();
     }
   }
 
   async loadUserOrganizations() {
     if (!this.phoneNumber) return;
 
-    this.showLoading('Loading organizations...');
-
     try {
+      this.isLoading = true;
       this.organizations = [];
 
       // Get organizations where user is a member
       const membershipDocs = await getDocs(
         query(
-          collection(this.db, 'memberships'),
+          collection(db, 'memberships'),
           where('phone', '==', this.phoneNumber),
         ),
       );
@@ -308,94 +177,35 @@ export class ProfileComponent implements OnInit {
 
       // Get org details
       for (const orgId of orgIds) {
-        const orgDoc = await getDoc(doc(this.db, 'organizations', orgId));
+        const orgDocs = await getDocs(
+          query(collection(db, 'organizations'), where('id', '==', orgId)),
+        );
 
-        if (orgDoc.exists()) {
-          const orgData = orgDoc.data();
-
-          // Convert Firestore timestamp to Date
-          let createdAt: Date;
-          if (orgData['createdAt'] instanceof Timestamp) {
-            createdAt = orgData['createdAt'].toDate();
-          } else {
-            createdAt = new Date(orgData['createdAt']);
-          }
-
-          // Get member count
-          const memberCount = await this.getOrgMemberCount(orgId);
-
-          // Get alerts count
-          const alertsCount = await this.getOrgAlertsCount(orgId);
-
-          const organization: Organization = {
-            id: orgId,
-            name: orgData['name'],
-            description: orgData['description'] || 'No description provided',
-            createdAt: createdAt,
-            adminPhone: orgData['adminPhone'],
-            memberCount: memberCount,
-            alertsCount: alertsCount,
-          };
-
-          this.organizations.push(organization);
+        if (!orgDocs.empty) {
+          const orgData = orgDocs.docs[0].data() as Organization;
+          this.organizations.push(orgData);
         }
       }
-
-      // Sort organizations by date (newest first)
-      this.organizations.sort(
-        (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
-      );
     } catch (e) {
       console.error('Error loading organizations:', e);
-      this.showSnackBar('Error loading organizations', 'error');
     } finally {
-      this.hideLoading();
-    }
-  }
-
-  async getOrgMemberCount(orgId: string): Promise<number> {
-    try {
-      const memberQuery = query(
-        collection(this.db, 'memberships'),
-        where('organizationId', '==', orgId),
-      );
-      const memberDocs = await getDocs(memberQuery);
-      return memberDocs.size;
-    } catch (e) {
-      console.error('Error getting member count:', e);
-      return 0;
-    }
-  }
-
-  async getOrgAlertsCount(orgId: string): Promise<number> {
-    try {
-      const alertQuery = query(
-        collection(this.db, 'notifications'),
-        where('organizationId', '==', orgId),
-      );
-      const alertDocs = await getDocs(alertQuery);
-      return alertDocs.size;
-    } catch (e) {
-      console.error('Error getting alerts count:', e);
-      return 0;
+      this.isLoading = false;
     }
   }
 
   async createOrganization() {
-    if (this.newOrgForm.invalid) {
-      this.showSnackBar('Please enter an organization name');
+    if (!this.newOrgName) {
+      this.showErrorMessage('Please enter an organization name');
       return;
     }
 
     if (!this.phoneNumber) {
-      this.showSnackBar('Please save your profile first');
+      this.showErrorMessage('Please save your profile first');
       return;
     }
 
-    this.showLoading('Creating organization...');
-
     try {
-      const formData = this.newOrgForm.value;
+      this.isLoading = true;
 
       // Generate unique ID for the org
       const orgId = 'org_' + Math.random().toString(36).substr(2, 9);
@@ -403,467 +213,247 @@ export class ProfileComponent implements OnInit {
       // Create organization
       const org: Organization = {
         id: orgId,
-        name: formData.name,
-        description: formData.description || 'No description provided',
+        name: this.newOrgName,
+        description: this.newOrgDescription || 'No description provided',
         createdAt: new Date(),
         adminPhone: this.phoneNumber,
       };
 
       // Save to Firestore
-      await setDoc(doc(this.db, 'organizations', orgId), {
-        ...org,
-        createdAt: serverTimestamp(),
-      });
+      await setDoc(doc(db, 'organizations', orgId), org);
 
       // Add current user as a member
-      await setDoc(
-        doc(this.db, 'memberships', `${orgId}_${this.phoneNumber}`),
-        {
-          organizationId: orgId,
-          phone: this.phoneNumber,
-          name: this.userName || 'Anonymous User',
-          email: this.email || '',
-          joinedAt: serverTimestamp(),
-          receiveNotifications: true,
-          isAdmin: true,
-        },
-      );
+      await setDoc(doc(db, 'memberships', `${orgId}_${this.phoneNumber}`), {
+        organizationId: orgId,
+        phone: this.phoneNumber,
+        name: this.userName || 'Anonymous User',
+        email: this.email || '',
+        joinedAt: new Date(),
+        receiveNotifications: true,
+        isAdmin: true,
+      });
 
       // Generate join code
       const joinCode = Math.random().toString(36).substr(2, 6).toUpperCase();
-      await setDoc(doc(this.db, 'joinCodes', joinCode), {
+      await setDoc(doc(db, 'joinCodes', joinCode), {
         code: joinCode,
         organizationId: orgId,
-        createdAt: serverTimestamp(),
+        createdAt: new Date(),
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days expiration
       });
 
-      this.showSnackBar('Organization created successfully!');
-      this.newOrgForm.reset();
+      this.showSuccessMessage('Organization created successfully!');
+      this.newOrgName = '';
+      this.newOrgDescription = '';
       this.isCreatingOrg = false;
 
-      // Refresh organizations and select the new one
-      await this.loadUserOrganizations();
-      const newOrg = this.organizations.find((o) => o.id === orgId);
-      if (newOrg) {
-        this.selectOrganization(newOrg);
-      }
+      // Generate shareable link
+      this.shareableLink = `${window.location.origin}/join?code=${joinCode}`;
+      this.showShareLink = true;
 
-      // Show the invite code
-      this.showSnackBar(`Join code: ${joinCode}`, 'info', 10000);
+      // Refresh organizations
+      this.loadUserOrganizations();
     } catch (e) {
       console.error('Error creating organization:', e);
-      this.showSnackBar('Error creating organization', 'error');
+      this.showErrorMessage('Error creating organization');
     } finally {
-      this.hideLoading();
+      this.isLoading = false;
     }
   }
 
   async joinOrganization() {
-    const formData = this.joinForm.value;
-
-    if (!formData.joinCode) {
-      this.showSnackBar('Please enter a join code');
+    if (!this.joinCode) {
+      this.showErrorMessage('Please enter a join code');
       return;
     }
 
     if (!this.phoneNumber) {
-      this.showSnackBar('Please save your profile first');
+      this.showErrorMessage('Please save your profile first');
       return;
     }
 
-    this.showLoading('Joining organization...');
-
     try {
+      this.isLoading = true;
+
       // Find join code
-      const joinCodeSnapshot = await getDocs(
+      const joinCodeDocs = await getDocs(
         query(
-          collection(this.db, 'joinCodes'),
-          where('code', '==', formData.joinCode.toUpperCase()),
+          collection(db, 'joinCodes'),
+          where('code', '==', this.joinCode.toUpperCase()),
         ),
       );
 
-      if (joinCodeSnapshot.empty) {
-        this.showSnackBar('Invalid join code', 'error');
+      if (joinCodeDocs.empty) {
+        this.showErrorMessage('Invalid join code');
         return;
       }
 
-      const joinCodeData = joinCodeSnapshot.docs[0].data();
+      const joinCodeData = joinCodeDocs.docs[0].data();
       const orgId = joinCodeData['organizationId'];
 
       // Check if code is expired
-      if (joinCodeData['expiresAt'] instanceof Timestamp) {
-        if (joinCodeData['expiresAt'].toDate() < new Date()) {
-          this.showSnackBar('Join code has expired', 'error');
-          return;
-        }
-      } else if (new Date(joinCodeData['expiresAt']) < new Date()) {
-        this.showSnackBar('Join code has expired', 'error');
+      if (joinCodeData['expiresAt'].toDate() < new Date()) {
+        this.showErrorMessage('Join code has expired');
         return;
       }
 
       // Add user as a member
-      await setDoc(
-        doc(this.db, 'memberships', `${orgId}_${this.phoneNumber}`),
-        {
-          organizationId: orgId,
-          phone: this.phoneNumber,
-          name: this.userName || 'Anonymous User',
-          email: this.email || '',
-          joinedAt: serverTimestamp(),
-          receiveNotifications: true,
-          isAdmin: false,
-        },
-      );
+      await setDoc(doc(db, 'memberships', `${orgId}_${this.phoneNumber}`), {
+        organizationId: orgId,
+        phone: this.phoneNumber,
+        name: this.userName || 'Anonymous User',
+        email: this.email || '',
+        joinedAt: new Date(),
+        receiveNotifications: true,
+        isAdmin: false,
+      });
 
-      this.showSnackBar('Successfully joined organization!');
-      this.joinForm.reset();
+      this.showSuccessMessage('Successfully joined organization!');
+      this.joinCode = '';
       this.isJoiningOrg = false;
 
-      // Refresh organizations and select the new one
-      await this.loadUserOrganizations();
-      const newOrg = this.organizations.find((o) => o.id === orgId);
-      if (newOrg) {
-        this.selectOrganization(newOrg);
-      }
+      // Refresh organizations
+      this.loadUserOrganizations();
     } catch (e) {
       console.error('Error joining organization:', e);
-      this.showSnackBar('Error joining organization', 'error');
+      this.showErrorMessage('Error joining organization');
     } finally {
-      this.hideLoading();
+      this.isLoading = false;
     }
   }
 
   async selectOrganization(org: Organization) {
     this.selectedOrg = org;
-    this.activeTab = 0; // Reset to first tab
-
-    this.showLoading('Loading organization details...');
 
     try {
+      this.isLoading = true;
+      this.members = [];
+
       // Get members of this organization
-      await this.loadOrgMembers(org.id);
-
-      // Get recent alerts
-      await this.loadOrgAlerts(org.id);
-    } catch (e) {
-      console.error('Error loading organization details:', e);
-      this.showSnackBar('Error loading organization details', 'error');
-    } finally {
-      this.hideLoading();
-    }
-  }
-
-  async loadOrgMembers(orgId: string) {
-    try {
       const membershipDocs = await getDocs(
         query(
-          collection(this.db, 'memberships'),
-          where('organizationId', '==', orgId),
+          collection(db, 'memberships'),
+          where('organizationId', '==', org.id),
         ),
       );
 
       this.members = membershipDocs.docs.map((doc) => {
         const data = doc.data();
-
-        // Convert Firestore timestamp to Date
-        let joinedAt: Date;
-        if (data['joinedAt'] instanceof Timestamp) {
-          joinedAt = data['joinedAt'].toDate();
-        } else {
-          joinedAt = new Date(data['joinedAt']);
-        }
-
         return {
-          id: doc.id,
           phone: data['phone'],
           name: data['name'] || 'Unknown User',
           email: data['email'] || '',
-          joinedAt: joinedAt,
-          receiveNotifications: data['receiveNotifications'] || false,
-          isAdmin: data['isAdmin'] || false,
+          joinedAt: data['joinedAt'].toDate(),
+          receiveNotifications: data['receiveNotifications'],
         };
       });
 
-      // Sort members by join date (newest first)
-      this.members.sort((a, b) => b.joinedAt.getTime() - a.joinedAt.getTime());
-    } catch (e) {
-      console.error('Error loading members:', e);
-      throw e;
-    }
-  }
-
-  async loadOrgAlerts(orgId: string) {
-    try {
-      const alertDocs = await getDocs(
+      // Generate a new join code if needed
+      const joinCodeDocs = await getDocs(
         query(
-          collection(this.db, 'notifications'),
-          where('organizationId', '==', orgId),
-          orderBy('sentAt', 'desc'),
-          limit(10),
+          collection(db, 'joinCodes'),
+          where('organizationId', '==', org.id),
+          where('expiresAt', '>', new Date()),
         ),
       );
 
-      this.recentAlerts = alertDocs.docs.map((doc) => {
-        const data = doc.data();
-
-        // Convert Firestore timestamp to Date
-        let sentAt: Date;
-        if (data['sentAt'] instanceof Timestamp) {
-          sentAt = data['sentAt'].toDate();
-        } else {
-          sentAt = new Date(data['sentAt']);
-        }
-
-        return {
-          id: doc.id,
-          title: data['title'],
-          message: data['message'],
-          severity: data['severity'] || 'info',
-          sentAt: sentAt,
-          sentBy: data['sentBy'],
-          sentByName: data['sentByName'] || 'Unknown',
-          recipientCount: data['recipientCount'] || this.members.length,
-          status: data['status'] || 'sent',
-        };
-      });
-    } catch (e) {
-      console.error('Error loading alerts:', e);
-      throw e;
-    }
-  }
-
-  openAddMemberDialog() {
-    if (!this.selectedOrg) return;
-
-    const dialogRef = this.dialog.open(AddMemberDialogComponent, {
-      width: '500px',
-      data: { organizationId: this.selectedOrg.id },
-    });
-
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        this.addMembers(result);
-      }
-    });
-  }
-
-  async addMembers(members: any[]) {
-    if (!this.selectedOrg || !members.length) return;
-
-    this.showLoading('Adding members...');
-
-    try {
-      for (const member of members) {
-        // Generate member ID
-        const memberId = `${this.selectedOrg.id}_${member.phone}`;
-
-        // Check if member already exists
-        const memberDoc = await getDoc(doc(this.db, 'memberships', memberId));
-
-        if (!memberDoc.exists()) {
-          // Add member to firestore
-          await setDoc(doc(this.db, 'memberships', memberId), {
-            organizationId: this.selectedOrg.id,
-            phone: member.phone,
-            name: member.name,
-            email: member.email || '',
-            joinedAt: serverTimestamp(),
-            receiveNotifications: true,
-            isAdmin: false,
-          });
-        }
-      }
-
-      this.showSnackBar(`Added ${members.length} members`);
-
-      // Reload members
-      await this.loadOrgMembers(this.selectedOrg.id);
-    } catch (e) {
-      console.error('Error adding members:', e);
-      this.showSnackBar('Error adding members', 'error');
-    } finally {
-      this.hideLoading();
-    }
-  }
-
-  openCreateAlertDialog() {
-    if (!this.selectedOrg) return;
-
-    const dialogRef = this.dialog.open(CreateAlertDialogComponent, {
-      width: '600px',
-      data: {
-        organizationId: this.selectedOrg.id,
-        organizationName: this.selectedOrg.name,
-        memberCount: this.members.length,
-      },
-    });
-
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        this.sendAlert(result);
-      }
-    });
-  }
-
-  async sendAlert(alertData: any) {
-    if (!this.selectedOrg) return;
-
-    this.showLoading('Sending alert...');
-
-    try {
-      // Create notification in Firestore
-      const alertRef = await addDoc(collection(this.db, 'notifications'), {
-        organizationId: this.selectedOrg.id,
-        title: alertData.title,
-        message: alertData.message,
-        severity: alertData.severity || 'info',
-        sentAt: serverTimestamp(),
-        sentBy: this.phoneNumber,
-        sentByName: this.userName,
-        recipientCount: this.members.length,
-        status: 'sent',
-      });
-
-      // Also add to Google Sheets if needed
-      if (this.isGoogleSheetsConnected) {
-        this.syncAlertToGoogleSheets({
-          id: alertRef.id,
-          ...alertData,
-          sentAt: new Date(),
-          sentBy: this.phoneNumber,
-          sentByName: this.userName,
-          recipientCount: this.members.length,
+      if (joinCodeDocs.empty) {
+        // Create a new join code
+        const joinCode = Math.random().toString(36).substr(2, 6).toUpperCase();
+        await setDoc(doc(db, 'joinCodes', joinCode), {
+          code: joinCode,
+          organizationId: org.id,
+          createdAt: new Date(),
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days expiration
         });
+
+        this.shareableLink = `${window.location.origin}/join?code=${joinCode}`;
+      } else {
+        const joinCode = joinCodeDocs.docs[0].data()['code'];
+        this.shareableLink = `${window.location.origin}/join?code=${joinCode}`;
       }
-
-      this.showSnackBar('Alert sent successfully!');
-
-      // Reload alerts
-      await this.loadOrgAlerts(this.selectedOrg.id);
     } catch (e) {
-      console.error('Error sending alert:', e);
-      this.showSnackBar('Error sending alert', 'error');
+      console.error('Error loading organization details:', e);
+      this.showErrorMessage('Error loading organization details');
     } finally {
-      this.hideLoading();
+      this.isLoading = false;
     }
   }
 
-  async toggleMemberNotifications(member: Member) {
+  async sendTestNotification() {
     if (!this.selectedOrg) return;
 
-    this.showLoading('Updating member...');
-
     try {
-      const memberId = `${this.selectedOrg.id}_${member.phone}`;
+      this.isLoading = true;
 
-      // Update the member's notification status
-      await updateDoc(doc(this.db, 'memberships', memberId), {
-        receiveNotifications: !member.receiveNotifications,
+      // Create notification in Firestore
+      await addDoc(collection(db, 'notifications'), {
+        organizationId: this.selectedOrg.id,
+        title: 'Test Notification',
+        message: `This is a test notification from ${this.userName || 'an admin'} in ${this.selectedOrg.name}.`,
+        severity: 'info',
+        sentAt: new Date(),
+        sentBy: this.phoneNumber,
       });
 
-      // Update local data
-      member.receiveNotifications = !member.receiveNotifications;
-
-      this.showSnackBar('Member updated');
+      this.showSuccessMessage('Test notification sent!');
     } catch (e) {
-      console.error('Error updating member:', e);
-      this.showSnackBar('Error updating member', 'error');
+      console.error('Error sending notification:', e);
+      this.showErrorMessage('Error sending notification');
     } finally {
-      this.hideLoading();
+      this.isLoading = false;
     }
   }
 
-  connectGoogleSheets() {
-    // This would normally open OAuth flow or API key setup
-    // For this demo, we'll just simulate connecting
-    this.showLoading('Connecting to Google Sheets...');
+  async sendOutageAlert() {
+    if (!this.selectedOrg) return;
 
+    try {
+      this.isLoading = true;
+
+      // Create outage alert notification
+      await addDoc(collection(db, 'notifications'), {
+        organizationId: this.selectedOrg.id,
+        title: 'OUTAGE ALERT',
+        message: `High probability of power outage detected in the next 24 hours. Please take necessary precautions.`,
+        severity: 'high',
+        sentAt: new Date(),
+        sentBy: this.phoneNumber,
+      });
+
+      this.showSuccessMessage('Outage alert sent to all members!');
+    } catch (e) {
+      console.error('Error sending outage alert:', e);
+      this.showErrorMessage('Error sending outage alert');
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  showSuccessMessage(msg: string) {
+    this.message = msg;
+    this.messageType = 'success';
+    this.showMessage = true;
     setTimeout(() => {
-      this.isGoogleSheetsConnected = true;
-      this.hideLoading();
-      this.showSnackBar('Connected to Google Sheets');
-    }, 2000);
+      this.showMessage = false;
+    }, 5000);
   }
 
-  syncAlertToGoogleSheets(alert: Alert) {
-    // In a real implementation, this would call a backend API
-    // that would handle the Google Sheets API authentication and writing
-    console.log('Would sync to Google Sheets:', alert);
-
-    // Example of what this might look like with a backend API:
-    /*
-    this.http.post('/api/sheets/sync', {
-      type: 'alert',
-      data: alert
-    }).subscribe(
-      response => console.log('Synced to Google Sheets', response),
-      error => console.error('Error syncing to Google Sheets', error)
-    );
-    */
+  showErrorMessage(msg: string) {
+    this.message = msg;
+    this.messageType = 'error';
+    this.showMessage = true;
+    setTimeout(() => {
+      this.showMessage = false;
+    }, 5000);
   }
 
-  refreshData() {
-    if (this.selectedOrg) {
-      this.loadOrgMembers(this.selectedOrg.id);
-      this.loadOrgAlerts(this.selectedOrg.id);
-    } else {
-      this.loadUserOrganizations();
-    }
-  }
-
-  showLoading(message: string = 'Loading...') {
-    this.isLoading = true;
-    this.loadingMessage = message;
-  }
-
-  hideLoading() {
-    this.isLoading = false;
-    this.loadingMessage = '';
-  }
-
-  showSnackBar(
-    message: string,
-    type: 'success' | 'error' | 'info' = 'success',
-    duration: number = 3000,
-  ) {
-    this.snackBar.open(message, 'Close', {
-      duration: duration,
-      panelClass: [`snackbar-${type}`],
-    });
+  copyShareableLink() {
+    navigator.clipboard.writeText(this.shareableLink);
+    this.showSuccessMessage('Link copied to clipboard!');
   }
 
   backToOrgList() {
     this.selectedOrg = null;
-  }
-
-  formatDatetime(date: Date): string {
-    return date.toLocaleString();
-  }
-
-  getAlertIcon(severity: string): string {
-    switch (severity) {
-      case 'critical':
-        return 'warning';
-      case 'high':
-        return 'priority_high';
-      case 'warning':
-        return 'report_problem';
-      default:
-        return 'info';
-    }
-  }
-
-  getAlertColor(severity: string): string {
-    switch (severity) {
-      case 'critical':
-        return 'rgb(244, 67, 54)';
-      case 'high':
-        return 'rgb(255, 87, 34)';
-      case 'warning':
-        return 'rgb(255, 152, 0)';
-      default:
-        return 'rgb(33, 150, 243)';
-    }
   }
 }
