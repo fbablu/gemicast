@@ -1,31 +1,340 @@
-<!-- ✅ Checkbox toggle -->
-<div class="mb-4">
-  <label class="flex items-center space-x-2">
-    <input type="checkbox" [(ngModel)]="receiveTexts" />
-    <span class="text-white">Receive text alerts</span>
-  </label>
-</div>
+<div class="min-h-screen bg-gray-100 p-6">
+  <div class="bg-white rounded-lg shadow-md p-6 max-w-2xl mx-auto">
+    <!-- User Profile Section -->
+    <div *ngIf="!selectedOrg" class="mb-8">
+      <h2 class="text-2xl font-bold mb-4 text-blue-700">Your Profile</h2>
 
-<!-- ✅ Show phone number input only if receiveTexts is true -->
-<div *ngIf="receiveTexts" class="mb-4">
-  <!-- Label -->
-  <label class="block text-white mb-1">Enter your phone number</label>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-gray-700 font-medium mb-2">Name</label>
+          <input
+            type="text"
+            [(ngModel)]="userName"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your name"
+          />
+        </div>
 
-  <!-- Input box with updated styles -->
-  <input
-    type="text"
-    [(ngModel)]="phoneNumber"
-    class="p-2 border rounded w-full text-white placeholder:italic placeholder-gray-400 bg-transparent"
-    placeholder="Enter your phone number"
-  />
-</div>
+        <div>
+          <label class="block text-gray-700 font-medium mb-2"
+            >Phone Number</label
+          >
+          <input
+            type="text"
+            [(ngModel)]="phoneNumber"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your phone number"
+          />
+        </div>
 
-<!-- ✅ Save button -->
-<div *ngIf="receiveTexts">
-  <button
-    (click)="savePhoneNumber()"
-    class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-  >
-    Save Preferences
-  </button>
+        <div>
+          <label class="block text-gray-700 font-medium mb-2"
+            >Email (Optional)</label
+          >
+          <input
+            type="email"
+            [(ngModel)]="email"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your email"
+          />
+        </div>
+
+        <div class="flex items-center">
+          <input
+            type="checkbox"
+            [(ngModel)]="receiveTexts"
+            id="receiveTexts"
+            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          />
+          <label for="receiveTexts" class="ml-2 block text-gray-700">
+            Receive outage alerts via text message
+          </label>
+        </div>
+
+        <button
+          (click)="saveUserInfo()"
+          [disabled]="isLoading"
+          class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+        >
+          <span *ngIf="isLoading">Saving...</span>
+          <span *ngIf="!isLoading">Save Profile</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Organization Management Section -->
+    <div *ngIf="!selectedOrg" class="border-t border-gray-200 pt-6">
+      <h2 class="text-2xl font-bold mb-4 text-blue-700">Your Organizations</h2>
+
+      <div
+        *ngIf="!organizations.length && !isCreatingOrg && !isJoiningOrg"
+        class="text-center py-8"
+      >
+        <p class="text-gray-500 mb-4">
+          You haven't joined any organizations yet
+        </p>
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+          <button
+            (click)="isCreatingOrg = true"
+            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            Create Organization
+          </button>
+          <button
+            (click)="isJoiningOrg = true"
+            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+          >
+            Join Organization
+          </button>
+        </div>
+      </div>
+
+      <div
+        *ngIf="organizations.length && !isCreatingOrg && !isJoiningOrg"
+        class="space-y-4"
+      >
+        <div
+          *ngFor="let org of organizations"
+          class="border border-gray-200 rounded-md p-4 hover:bg-gray-50 cursor-pointer"
+          (click)="selectOrganization(org)"
+        >
+          <h3 class="font-bold text-lg">{{ org.name }}</h3>
+          <p class="text-gray-600 text-sm">{{ org.description }}</p>
+          <div class="mt-2 text-xs text-gray-500">
+            <span
+              *ngIf="org.adminPhone === phoneNumber"
+              class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full"
+              >Admin</span
+            >
+            <span class="ml-2">Created: {{ org.createdAt | date }}</span>
+          </div>
+        </div>
+
+        <div class="flex gap-4 mt-6">
+          <button
+            (click)="isCreatingOrg = true"
+            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            Create Organization
+          </button>
+          <button
+            (click)="isJoiningOrg = true"
+            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+          >
+            Join Organization
+          </button>
+        </div>
+      </div>
+
+      <!-- Create Organization Form -->
+      <div
+        *ngIf="isCreatingOrg"
+        class="border border-gray-200 rounded-md p-6 bg-gray-50"
+      >
+        <h3 class="font-bold text-lg mb-4">Create New Organization</h3>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-gray-700 font-medium mb-2"
+              >Organization Name</label
+            >
+            <input
+              type="text"
+              [(ngModel)]="newOrgName"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter organization name"
+            />
+          </div>
+
+          <div>
+            <label class="block text-gray-700 font-medium mb-2"
+              >Description</label
+            >
+            <textarea
+              [(ngModel)]="newOrgDescription"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Describe your organization"
+              rows="3"
+            ></textarea>
+          </div>
+
+          <div class="flex gap-4">
+            <button
+              (click)="createOrganization()"
+              [disabled]="isLoading || !newOrgName"
+              class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+            >
+              <span *ngIf="isLoading">Creating...</span>
+              <span *ngIf="!isLoading">Create</span>
+            </button>
+            <button
+              (click)="isCreatingOrg = false"
+              class="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Join Organization Form -->
+      <div
+        *ngIf="isJoiningOrg"
+        class="border border-gray-200 rounded-md p-6 bg-gray-50"
+      >
+        <h3 class="font-bold text-lg mb-4">Join an Organization</h3>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-gray-700 font-medium mb-2"
+              >Enter Join Code</label
+            >
+            <input
+              type="text"
+              [(ngModel)]="joinCode"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter join code"
+            />
+          </div>
+
+          <div class="flex gap-4">
+            <button
+              (click)="joinOrganization()"
+              [disabled]="isLoading || !joinCode"
+              class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
+            >
+              <span *ngIf="isLoading">Joining...</span>
+              <span *ngIf="!isLoading">Join</span>
+            </button>
+            <button
+              (click)="isJoiningOrg = false"
+              class="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Organization Detail View -->
+    <div *ngIf="selectedOrg">
+      <div class="flex items-center mb-6">
+        <button
+          (click)="backToOrgList()"
+          class="mr-3 text-blue-600 hover:text-blue-800 focus:outline-none"
+        >
+          ← Back
+        </button>
+        <h2 class="text-2xl font-bold text-blue-700">{{ selectedOrg.name }}</h2>
+      </div>
+
+      <div class="bg-blue-50 p-4 rounded-md mb-6">
+        <p class="text-gray-700">{{ selectedOrg.description }}</p>
+        <p class="text-sm text-gray-500 mt-2">
+          Created on {{ selectedOrg.createdAt | date }}
+        </p>
+      </div>
+
+      <!-- Notification Controls -->
+      <div class="border border-gray-200 rounded-md p-4 mb-6">
+        <h3 class="font-bold text-lg mb-4">Send Notifications</h3>
+
+        <div class="flex flex-col sm:flex-row gap-4">
+          <button
+            (click)="sendTestNotification()"
+            [disabled]="isLoading"
+            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+          >
+            Send Test Notification
+          </button>
+
+          <button
+            (click)="sendOutageAlert()"
+            [disabled]="isLoading"
+            class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
+          >
+            Send Outage Alert
+          </button>
+        </div>
+      </div>
+
+      <!-- Invite Members -->
+      <div class="border border-gray-200 rounded-md p-4 mb-6">
+        <h3 class="font-bold text-lg mb-4">Invite Members</h3>
+
+        <div class="mb-4">
+          <label class="block text-gray-700 font-medium mb-2"
+            >Share this link or code</label
+          >
+          <div class="flex">
+            <input
+              type="text"
+              [value]="shareableLink"
+              class="flex-grow px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              readonly
+            />
+            <button
+              (click)="copyShareableLink()"
+              class="bg-blue-600 text-white px-4 py-2 rounded-r-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              Copy
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Members List -->
+      <div>
+        <h3 class="font-bold text-lg mb-4">Members ({{ members.length }})</h3>
+
+        <div class="overflow-x-auto">
+          <table class="min-w-full bg-white border border-gray-200">
+            <thead>
+              <tr>
+                <th class="py-2 px-4 border-b text-left">Name</th>
+                <th class="py-2 px-4 border-b text-left">Phone</th>
+                <th class="py-2 px-4 border-b text-left">Email</th>
+                <th class="py-2 px-4 border-b text-left">Joined</th>
+                <th class="py-2 px-4 border-b text-left">Notifications</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let member of members" class="hover:bg-gray-50">
+                <td class="py-2 px-4 border-b">{{ member.name }}</td>
+                <td class="py-2 px-4 border-b">{{ member.phone }}</td>
+                <td class="py-2 px-4 border-b">{{ member.email || "N/A" }}</td>
+                <td class="py-2 px-4 border-b">{{ member.joinedAt | date }}</td>
+                <td class="py-2 px-4 border-b">
+                  <span
+                    *ngIf="member.receiveNotifications"
+                    class="text-green-600"
+                    >Enabled</span
+                  >
+                  <span
+                    *ngIf="!member.receiveNotifications"
+                    class="text-red-600"
+                    >Disabled</span
+                  >
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status Message -->
+    <div
+      *ngIf="showMessage"
+      [ngClass]="{
+        'bg-green-100 border-green-500 text-green-900':
+          messageType === 'success',
+        'bg-red-100 border-red-500 text-red-900': messageType === 'error',
+      }"
+      class="fixed bottom-4 right-4 px-4 py-3 border-l-4 rounded shadow-md"
+    >
+      {{ message }}
+    </div>
+  </div>
 </div>

@@ -1,12 +1,22 @@
 // src/app/components/predict/predict.component.ts
-// AI-powered prediction component for weather and outage forecasting
-
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import {
+  FormsModule,
+  ReactiveFormsModule,
+  FormControl,
+  FormGroup,
+  FormBuilder,
+  Validators,
+} from '@angular/forms';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import {
+  PredictionService,
+  WeatherData,
+  PredictionResult,
+} from '../../services/prediction.service';
 
 interface Message {
   id: string;
@@ -31,6 +41,7 @@ interface ModelOption {
   imports: [
     CommonModule,
     FormsModule,
+    ReactiveFormsModule,
     MatMenuModule,
     MatDividerModule,
     MatTooltipModule,
@@ -47,6 +58,26 @@ export class PredictComponent implements OnInit {
   isCalendarSyncing = false;
   isWeatherRefreshing = false;
   selectedModel: ModelType = '2.0-flash';
+
+  // Current weather data
+  currentWeather: WeatherData | null = null;
+  // Counties in Tennessee
+  counties: string[] = [
+    'Davidson',
+    'Shelby',
+    'Knox',
+    'Hamilton',
+    'Rutherford',
+    'Williamson',
+    'Sumner',
+    'Montgomery',
+    'Wilson',
+    'Blount',
+  ];
+  // Selected county for predictions
+  selectedCounty: string = 'Davidson';
+  // Latest prediction result
+  lastPrediction: PredictionResult | null = null;
 
   modelOptions: ModelOption[] = [
     {
@@ -72,9 +103,12 @@ export class PredictComponent implements OnInit {
     },
   ];
 
-  constructor() {}
+  constructor(private predictionService: PredictionService) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    // Fetch weather for default county
+    this.fetchWeatherData('Davidson');
+  }
 
   scrollToBottom(): void {
     setTimeout(() => {
@@ -111,32 +145,302 @@ export class PredictComponent implements OnInit {
       }
     }, 100);
 
-    // Simulate API call
+    // Process the message
+    this.processUserMessage(userMessage);
+  }
+
+  processUserMessage(message: Message): void {
+    // If we have a current action, handle it
+    if (this.currentAction) {
+      switch (this.currentAction) {
+        case 'calendar':
+          this.handleCalendarSync();
+          return;
+        case 'event':
+          this.handleEventPlanning(message.content);
+          return;
+        case 'question':
+          this.handleWeatherQuestion(message.content);
+          return;
+        case 'schedule':
+          this.handleScheduleAnalysis(message.content);
+          return;
+      }
+    }
+
+    // No specific action, analyze the message
+    const content = message.content.toLowerCase();
+
+    if (content.includes('weather') || content.includes('forecast')) {
+      this.handleWeatherQuestion(message.content);
+    } else if (content.includes('outage') || content.includes('power')) {
+      this.handleOutageQuestion(message.content);
+    } else if (content.includes('calendar') || content.includes('sync')) {
+      this.handleCalendarQuestion(message.content);
+    } else if (content.includes('event') || content.includes('plan')) {
+      this.handleEventPlanning(message.content);
+    } else {
+      // Generic response
+      this.sendAssistantResponse(
+        "I'm here to help with weather and power outage predictions. You can ask about current weather, outage risks, or plan events around potential outages. How can I assist you today?",
+      );
+    }
+  }
+
+  fetchWeatherData(county: string): void {
+    this.isWeatherRefreshing = true;
+
+    this.predictionService.getCurrentWeather(county).subscribe({
+      next: (data) => {
+        this.currentWeather = data;
+        this.selectedCounty = county;
+        this.isWeatherRefreshing = false;
+
+        // Make a prediction based on the new weather data
+        this.makePrediction(data);
+      },
+      error: (err) => {
+        console.error('Error fetching weather:', err);
+        this.isWeatherRefreshing = false;
+        this.sendAssistantResponse(
+          "I couldn't fetch the latest weather data. Please try again later.",
+        );
+      },
+    });
+  }
+
+  makePrediction(weatherData: WeatherData): void {
+    this.predictionService.predict(weatherData).subscribe({
+      next: (result) => {
+        this.lastPrediction = result;
+
+        // If this was triggered by a user action, send a response
+        if (this.isLoading) {
+          const response = this.formatPredictionResponse(result, weatherData);
+          this.sendAssistantResponse(response);
+        }
+      },
+      error: (err) => {
+        console.error('Prediction error:', err);
+        if (this.isLoading) {
+          this.sendAssistantResponse(
+            "I'm having trouble making a prediction right now. Please try again later.",
+          );
+        }
+      },
+    });
+  }
+
+  formatPredictionResponse(
+    prediction: PredictionResult,
+    weather: WeatherData,
+  ): string {
+    const county = weather.county || this.selectedCounty;
+    const outageStatus = prediction.outage_likely ? 'HIGH RISK' : 'Low risk';
+    const probability = Math.round(prediction.probability * 100);
+
+    let response = `**${county} County Power Outage Forecast**\n\n`;
+    response += `Status: **${outageStatus}**\n`;
+    response += `Probability: ${probability}%\n`;
+
+    if (prediction.outage_likely) {
+      response += `Estimated duration if outage occurs: ${prediction.estimated_duration.toFixed(1)} hours\n\n`;
+    }
+
+    response += `**Current Weather**\n`;
+    response += `Temperature: ${weather.temperature}°F\n`;
+    response += `Wind: ${weather.windSpeed} mph (gusts to ${weather.windGust} mph)\n`;
+    response += `Humidity: ${weather.relativeHumidity}%\n`;
+    response += `Precipitation chance: ${weather.precipitationChance}%\n\n`;
+
+    if (prediction.risk_factors.length > 0) {
+      response += `**Risk Factors**\n`;
+      prediction.risk_factors.forEach((factor) => {
+        response += `- ${factor.factor}: ${factor.value} (${factor.severity} risk)\n`;
+      });
+      response += '\n';
+    }
+
+    response += `**Recommendation**\n${prediction.recommendation}`;
+
+    return response;
+  }
+
+  handleWeatherQuestion(message: string): void {
+    // Extract county from message if mentioned
+    const countyMatch = this.counties.find((county) =>
+      message.toLowerCase().includes(county.toLowerCase()),
+    );
+
+    const county = countyMatch || this.selectedCounty;
+
+    // Fetch latest weather for the county
+    this.fetchWeatherData(county);
+  }
+
+  handleOutageQuestion(message: string): void {
+    // Extract county from message if mentioned
+    const countyMatch = this.counties.find((county) =>
+      message.toLowerCase().includes(county.toLowerCase()),
+    );
+
+    const county = countyMatch || this.selectedCounty;
+
+    // Fetch latest weather and make prediction
+    this.fetchWeatherData(county);
+  }
+
+  handleCalendarQuestion(message: string): void {
+    if (this.isCalendarSynced) {
+      this.sendAssistantResponse(
+        "Your Google Calendar is already connected. I'll analyze your upcoming events for weather and outage risks. Would you like me to look at a specific date or event?",
+      );
+    } else {
+      this.sendAssistantResponse(
+        'I can help you analyze your Google Calendar events for weather and outage risks. Please click the calendar icon below to connect your calendar.',
+      );
+    }
+  }
+
+  handleEventPlanning(message: string): void {
+    // Try to extract date information from the message
+    const dateRegex = /(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/;
+    const match = message.match(dateRegex);
+
+    if (match) {
+      const month = parseInt(match[1]);
+      const day = parseInt(match[2]);
+      const year = match[3] ? parseInt(match[3]) : new Date().getFullYear();
+
+      const eventDate = new Date(year, month - 1, day);
+      const formattedDate = eventDate.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      });
+
+      // Generate a response based on our current weather/prediction
+      if (this.currentWeather && this.lastPrediction) {
+        const riskLevel = this.lastPrediction.outage_likely ? 'high' : 'low';
+        const recommendation = this.lastPrediction.outage_likely
+          ? 'It would be advisable to have backup plans in place for power disruptions.'
+          : 'Power conditions should be stable for your event.';
+
+        this.sendAssistantResponse(
+          `I've analyzed the conditions for your event on ${formattedDate} in ${this.currentWeather.county} County.\n\n` +
+            `Based on historical patterns and current forecasts, there is a ${riskLevel} risk of power outages during this time. ${recommendation}\n\n` +
+            `Would you like specific recommendations for preparing for this event?`,
+        );
+      } else {
+        this.sendAssistantResponse(
+          `I'll analyze the conditions for your event on ${formattedDate}. ` +
+            `Please select a county to get specific outage risk predictions.`,
+        );
+      }
+    } else {
+      this.sendAssistantResponse(
+        "I'd be happy to help plan your event with power outage risks in mind. " +
+          'Could you provide the date of your event (MM/DD/YYYY format) and location?',
+      );
+    }
+  }
+
+  handleScheduleAnalysis(message: string): void {
+    // Try to extract multiple dates from the message
+    const dateRegex = /(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/g;
+    const matches = [...message.matchAll(dateRegex)];
+
+    if (matches.length > 0) {
+      let response = "I've analyzed your schedule for power outage risks:\n\n";
+
+      matches.forEach((match, index) => {
+        const month = parseInt(match[1]);
+        const day = parseInt(match[2]);
+        const year = match[3] ? parseInt(match[3]) : new Date().getFullYear();
+
+        const eventDate = new Date(year, month - 1, day);
+        const formattedDate = eventDate.toLocaleDateString('en-US', {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+        });
+
+        // Generate random risk level for each date (in a real app, this would be based on predictions)
+        const riskLevel =
+          Math.random() > 0.7
+            ? 'High'
+            : Math.random() > 0.4
+              ? 'Moderate'
+              : 'Low';
+        const riskEmoji =
+          riskLevel === 'High' ? '🔴' : riskLevel === 'Moderate' ? '🟠' : '🟢';
+
+        response += `${riskEmoji} **${formattedDate}**: ${riskLevel} outage risk\n`;
+      });
+
+      response +=
+        '\nWould you like detailed recommendations for any specific date?';
+
+      this.sendAssistantResponse(response);
+    } else {
+      this.sendAssistantResponse(
+        'I can analyze your schedule for outage risks. Please share your schedule with dates in MM/DD/YYYY format.',
+      );
+    }
+  }
+
+  handleCalendarSync(): void {
+    if (this.isCalendarSynced) {
+      this.isCalendarSynced = false;
+      this.sendAssistantResponse('Your Google Calendar has been disconnected.');
+      return;
+    }
+
+    this.isCalendarSyncing = true;
+
+    // Simulate API call to sync calendar
     setTimeout(() => {
       try {
-        const responseContent = this.generateResponse(
-          this.currentAction,
-          userMessage.content,
+        this.isCalendarSynced = true;
+        this.sendAssistantResponse(
+          'Your Google Calendar has been successfully connected. I can now analyze your events for weather and outage risks.\n\n' +
+            "I've found 3 upcoming events:\n" +
+            '- Team Meeting (Tomorrow, 10:00 AM) - Low outage risk\n' +
+            '- Client Presentation (Friday, 2:00 PM) - Moderate outage risk\n' +
+            '- Workshop (Next Monday, 9:00 AM) - Low outage risk\n\n' +
+            'Would you like more details on any of these events?',
         );
-        const assistantMessage: Message = {
-          id: Math.random().toString(36).substring(2, 11),
-          content: responseContent,
-          role: 'assistant',
-          timestamp: new Date(),
-        };
-
-        // Add assistant message to chat
-        this.messages = [...this.messages, assistantMessage];
-
-        // Reset current action
-        this.currentAction = null;
       } catch (error) {
-        console.error('Error generating response:', error);
+        console.error('Error syncing calendar:', error);
+        this.sendAssistantResponse(
+          "Sorry, I couldn't connect to your Google Calendar. Please try again later.",
+        );
       } finally {
-        this.isLoading = false;
-        this.scrollToBottom();
+        this.isCalendarSyncing = false;
       }
-    }, 1500);
+    }, 2000);
+  }
+
+  handleWeatherRefresh(): void {
+    this.fetchWeatherData(this.selectedCounty);
+    this.sendAssistantResponse(
+      `Refreshing weather data for ${this.selectedCounty} County...`,
+    );
+  }
+
+  sendAssistantResponse(content: string): void {
+    const assistantMessage: Message = {
+      id: Math.random().toString(36).substring(2, 11),
+      content: content,
+      role: 'assistant',
+      timestamp: new Date(),
+    };
+
+    // Add assistant message to chat
+    this.messages = [...this.messages, assistantMessage];
+    this.isLoading = false;
+    this.scrollToBottom();
   }
 
   getDefaultPromptForAction(action: ActionType): string {
@@ -154,41 +458,6 @@ export class PredictComponent implements OnInit {
     }
   }
 
-  generateResponse(action: ActionType | null, userInput: string): string {
-    // Call the Gemini API with the selected model
-    const modelInfo = `Using Gemini ${this.getSelectedModelName()} to analyze your request.`;
-
-    switch (action) {
-      case 'calendar':
-        return `${modelInfo}\n\nI'd be happy to analyze your Google Calendar events. To connect your Google Calendar, please authorize access using the button below:\n\n[Connect Google Calendar]\n\nOnce connected, I'll analyze your upcoming events for potential weather issues and outage risks.`;
-
-      case 'schedule':
-        return `${modelInfo}\n\nGreat! Please paste your schedule below, and I'll analyze it for weather and outage risks. Include dates, times, and locations if possible for more accurate predictions.`;
-
-      case 'event':
-        return `${modelInfo}\n\nI'd be happy to help you plan your event. Could you provide me with the following details?\n\n1. Event date and time\n2. Location\n3. Type of event (indoor/outdoor)\n4. Expected duration\n\nWith this information, I can assess weather conditions and potential outage risks for your event.`;
-
-      case 'question':
-        return `${modelInfo}\n\nI'm here to answer your questions about weather conditions and potential outages. What specific information are you looking for? You can ask about:\n\n- Weather forecasts for specific dates\n- Historical outage patterns in your area\n- Recommendations for scheduling important events\n- Preparation tips for potential weather disruptions`;
-
-      default:
-        if (userInput.toLowerCase().includes('weather')) {
-          return `${modelInfo}\n\nBased on the forecast data, there's a 30% chance of rain tomorrow with potential for minor power fluctuations. If you have outdoor events planned, consider having a backup indoor location.`;
-        } else if (userInput.toLowerCase().includes('outage')) {
-          return `${modelInfo}\n\nI've analyzed the historical outage data for your area. There's a heightened risk of power outages next Tuesday due to scheduled maintenance and predicted thunderstorms. Consider rescheduling any critical events.`;
-        } else if (userInput.toLowerCase().includes('calendar')) {
-          return `${modelInfo}\n\nI can help you analyze your Google Calendar events for weather and outage risks. Would you like to connect your Google Calendar now?`;
-        } else if (
-          userInput.toLowerCase().includes('schedule') ||
-          userInput.toLowerCase().includes('event')
-        ) {
-          return `${modelInfo}\n\nI'd be happy to analyze your schedule for potential weather or outage risks. You can share specific dates and locations, and I'll provide insights on potential disruptions.`;
-        } else {
-          return `${modelInfo}\n\nI'm your AI assistant for predicting weather and outage impacts on your events. I can help you plan around potential disruptions by analyzing your schedule or specific events. What would you like to know?`;
-        }
-    }
-  }
-
   handleActionClick(action: ActionType): void {
     this.currentAction = action;
     this.handleSend();
@@ -199,58 +468,6 @@ export class PredictComponent implements OnInit {
       event.preventDefault();
       this.handleSend();
     }
-  }
-
-  handleCalendarSync(): void {
-    if (this.isCalendarSynced) {
-      this.isCalendarSynced = false;
-      return;
-    }
-    this.isCalendarSyncing = true;
-    // Simulate API call to sync calendar
-    setTimeout(() => {
-      try {
-        this.isCalendarSynced = true;
-        const syncMessage: Message = {
-          id: Math.random().toString(36).substring(2, 11),
-          content:
-            'Your Google Calendar has been successfully connected. I can now analyze your events for weather and outage risks.',
-          role: 'assistant',
-          timestamp: new Date(),
-        };
-
-        this.messages = [...this.messages, syncMessage];
-        this.scrollToBottom();
-      } catch (error) {
-        console.error('Error syncing calendar:', error);
-      } finally {
-        this.isCalendarSyncing = false;
-      }
-    }, 2000);
-  }
-
-  handleWeatherRefresh(): void {
-    this.isWeatherRefreshing = true;
-
-    // Simulate API call to refresh weather data
-    setTimeout(() => {
-      try {
-        const refreshMessage: Message = {
-          id: Math.random().toString(36).substring(2, 11),
-          content:
-            "I've refreshed the weather data. The latest forecast shows a 20% chance of precipitation tomorrow with mild temperatures. No significant outage risks detected for the next 48 hours.",
-          role: 'assistant',
-          timestamp: new Date(),
-        };
-
-        this.messages = [...this.messages, refreshMessage];
-        this.scrollToBottom();
-      } catch (error) {
-        console.error('Error refreshing weather data:', error);
-      } finally {
-        this.isWeatherRefreshing = false;
-      }
-    }, 2000);
   }
 
   handleModelChange(modelId: ModelType): void {
