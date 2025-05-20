@@ -46,7 +46,7 @@ The main interface includes a responsive sidebar for navigation between the vari
 - Actionable recommendations based on risk levels
 - Tennessee coverage statistics
 
-### Predict Tab (AI-Powered)
+### Predict Tab
 
 - Gemini AI integration for natural language interactions
 - Weather and outage prediction data visualization
