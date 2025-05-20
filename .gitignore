@@ -47,4 +47,4 @@ src/app/prediction/models/*
 src/app/prediction/__pycache__/
 venv/
 .env
-bigquery-key.json
+src/environments/bigquery-key.json
