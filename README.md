@@ -19,8 +19,6 @@
   <img src="./src/images/predict_tab.png" alt="Predict Tab" width="550"/>
 </div>
 
-
-
 Gemicast is an intelligent power outage prediction platform developed by students from Vanderbilt University. This project was created for the Google Developer Group Solutions Challenge, aiming to design a predictive system that accurately forecasts localized power outages using real-time weather, environmental, and historical data.
 
 ## Motivation
@@ -34,6 +32,7 @@ The application provides a comprehensive dashboard with multiple components:
 ### Dashboard
 
 The main interface includes a responsive sidebar for navigation between the various tabs:
+
 - Map: Visualize geographic weather and outage data
 - Outages: County-specific risk assessment and historical data
 - Predict: AI-powered insights and predictions
@@ -147,6 +146,7 @@ nvm use v18.19.1
 ## API Backend
 
 The project includes a Python Flask API (`api/app.py`) for:
+
 - Weather data retrieval
 - Outage prediction using BigQuery ML
 - County risk rankings
@@ -161,6 +161,7 @@ python app.py
 ## Machine Learning Models
 
 The TensorFlow Decision Forests model is defined in `src/app/prediction/` directory with:
+
 - `data_loader.py`: Data preprocessing and loading pipeline
 - `noaa_model_prediction.py`: Main model definition and training
 - `combined_model.py`: Enhanced model with weather data integration

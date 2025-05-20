@@ -68,8 +68,13 @@ def predict():
     hour_of_day_val = data.get("hour", current_dt.hour)
     
     # Frontend sends county name like "Davidson"
-    county_input_original = data.get("county", "davidson") # Default for safety
-    county_input_lowercase = county_input_original.lower()
+    county_input = data.get("county", "Davidson") # Default for safety
+    county_normalized = county_input.lower().strip()
+    
+    if county_normalized not in ALL_COUNTIES:
+        print(f"Warning: County '{county_input}' not found in training data. Using fallback.")
+
+    county_input_lowercase = county_input.lower()
 
     # --- Construct the features dictionary for BQML ---
     # Default values should ideally come from your training data's statistics (mean/median/mode)
@@ -201,6 +206,8 @@ def predict():
         })
 
     except Exception as e:
+        print(f"Error for county '{county_input}': {str(e)}")
+        print(f"Query attempted: {query[:500]}...")             
         print(f"Error executing BigQuery ML.PREDICT query: {str(e)}")
         # Fallback to your simple logic if BQML call fails
         probability = calculate_probability_simple(data)
@@ -325,6 +332,9 @@ def get_weather():
     return jsonify(weather_data)
 
 
+
+
+
 @app.route('/api/rankings', methods=['GET'])
 def get_rankings():
     # For a production system, these rankings should be pre-calculated and stored,
@@ -351,6 +361,9 @@ def get_rankings():
         "low_risk": low_risk,
         "lastUpdated": datetime.now().isoformat()
     })
+
+
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

@@ -87,6 +87,7 @@ export class PredictionService {
         tap((data) => console.log(`Weather data for ${county}:`, data)),
         catchError((error) => {
           console.error(`Error fetching weather for ${county}:`, error);
+          console.error(`Status: ${error.status}, Message: ${error.message}`);
           const synthetic = this.generateSyntheticWeather(county);
           synthetic.weatherDescription = `API ERROR for ${county} - Using synthetic data`;
           return of(synthetic);
