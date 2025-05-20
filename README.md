@@ -10,13 +10,14 @@
   <a href="https://tailwindcss.com/" target="_blank"><img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS"></a>
   <a href="https://tensorflow.org/" target="_blank"><img src="https://img.shields.io/badge/TensorFlow-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white" alt="TensorFlow"></a>
   <a href="https://ai.google.dev/" target="_blank"><img src="https://img.shields.io/badge/Gemini_AI-8E75B2?style=for-the-badge&logo=google&logoColor=white" alt="Gemini AI"></a>
-  <a href="https://cloud.google.com/" target="_blank"><img src="https://img.shields.io/badge/Google_Cloud-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white" alt="Google Cloud"></a>
+  <a href="https://cloud.google.com/bigquery" target="_blank"><img src="https://img.shields.io/badge/BigQuery-669DF6?style=for-the-badge&logo=googlecloud&logoColor=white" alt="BigQuery"></a>
+  <a href="https://firebase.google.com/" target="_blank"><img src="https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase"></a>
 </p>
 
-<h1 align="center">
-  <img src="./src/images/predict_tab.png" alt="Icon" width="800"/>
-  <br>
-</h1>
+<div align="center" style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
+  <img src="./src/images/outage_tab.png" alt="Outage Tab" width="450"/>
+  <img src="./src/images/predict_tab.png" alt="Predict Tab" width="550"/>
+</div>
 
 
 
@@ -30,47 +31,62 @@ This project was motivated by real-world challenges as Vanderbilt Students livin
 
 The application provides a comprehensive dashboard with multiple components:
 
-### Home
+### Dashboard
 
-- Main statistical overview
-- Current location tracking (utilizing Google Geolocator/Maps API)
-- Outage Risk Score (from prediction model)
-- Interactive graphs showing outage risk over time
-- Weather risk assessment
+The main interface includes a responsive sidebar for navigation between the various tabs:
+- Map: Visualize geographic weather and outage data
+- Outages: County-specific risk assessment and historical data
+- Predict: AI-powered insights and predictions
+- Profile: User profile and organization management
 
-### Map
-
-- Detailed visualization of outage areas
-- Community-driven reporting system (similar to Waze)
-- Interactive map interface
-- Real-time outage monitoring
-
-### Outages
+### Outages Tab
 
 - County-specific outage risk assessment
-- Historical outage data visualization
-- Risk factor analysis
-- Weather condition integration
+- Historical outage data visualization with trend charts
+- Risk factor analysis with color-coded indicators
+- Current weather condition integration
 - Actionable recommendations based on risk levels
+- Tennessee coverage statistics
 
-### Predict
+### Predict Tab
 
-- AI-powered insights (using Gemini API)
+- Gemini AI integration for natural language interactions
+- Weather and outage prediction data visualization
 - Google Calendar integration for event planning
 - Schedule analysis for outage risk
-- Event planning assistance
-- Weather and outage-related Q&A
+- Event planning assistant with outage risk assessment
+- Weather and outage-related Q&A capabilities
+
+### Map View
+
+- Map integration with Google Maps API
+- Visualization of outage probabilities by location
+- Real-time weather data display
+- Interactive location selection
+
+### Profile Management
+
+- User profiles with notification preferences
+- Organization creation and management
+- Member invitations with shareable join codes
+- Alert notifications for organization members
+- Firebase integration for data storage
 
 ## Tech Stack
 
-- **Frontend**: Angular 19
+- **Frontend**: Angular 19 with Angular Material
+- **Styling**: Tailwind CSS and custom components
 - **Models**: TensorFlow Decision Forests for outage prediction
 - **AI Integration**: Google Gemini API
-- **APIs we considered**:
+- **Backend Services**:
+  - Firebase Authentication and Firestore
+  - Python Flask API for predictions
+  - BigQuery for model serving
+- **APIs**:
   - NOAA Weather API
   - Google Maps API
   - Google Calendar API
-- **Data Sources for TensorFlow Model**:
+- **Data Sources for Model**:
   - [NOAA Weather Data](https://weather-gov.github.io/api/general-faqs)
   - [Oak Ridge Eagle-I Power Outage Data (2014-2022)](https://doi.ccs.ornl.gov/dataset/ccec86f0-e144-5de8-aee0-fb26028b26e1)
   - [Event-correlated Eagle-I power outages (2014-2023)](https://data.openei.org/submissions/6458)
@@ -99,7 +115,7 @@ npm install
 ```
 
 3. Set up environment variables:
-   Create a `.env` file based on the `.env.example` file.
+   Update the environment files in `src/environments/` with your API keys.
 
 4. Start the development server:
 
@@ -128,27 +144,121 @@ nvm install v18.19.1
 nvm use v18.19.1
 ```
 
-## Cloud Resources
+## API Backend
 
-Athough we didn't use any cloud resources for this iteration, the solution will be using the following Google Cloud resources:
+The project includes a Python Flask API (`api/app.py`) for:
+- Weather data retrieval
+- Outage prediction using BigQuery ML
+- County risk rankings
 
-- Vertex AI platform
-- Compute Engine VMs
-- BigQuery
-- Cloud Run
-- Firebase and Firestore for notifications
+For local development, the API can be started with:
+
+```bash
+cd api
+python app.py
+```
+
+## Machine Learning Models
+
+The TensorFlow Decision Forests model is defined in `src/app/prediction/` directory with:
+- `data_loader.py`: Data preprocessing and loading pipeline
+- `noaa_model_prediction.py`: Main model definition and training
+- `combined_model.py`: Enhanced model with weather data integration
+- `api.py`: Flask API for serving model predictions
+
+## BigQuery ML Integration
+
+The project leverages Google BigQuery ML for serving the outage prediction model at scale:
+
+- **Model Training**: The TensorFlow Decision Forests model is trained locally and then exported to BigQuery ML format
+- **SQL-Based Predictions**: The prediction logic is encoded as SQL queries in `api.py`
+- **Feature Engineering**: Weather features are transformed in SQL before being passed to the model
+- **Scalable Inference**: Leveraging BigQuery's serverless architecture for fast predictions
+
+Sample BigQuery ML implementation:
+
+```sql
+SELECT
+  predicted_outage_occurred,
+  predicted_outage_occurred_probs[OFFSET(1)].prob AS probability_of_outage
+FROM
+  ML.PREDICT(MODEL `project-id.power_outages.outage_model_v2`,
+    (
+      SELECT
+        CAST(windSpeed AS FLOAT64) AS weather_windSpeed,
+        CAST(windGust AS FLOAT64) AS weather_windGust,
+        CAST(relativeHumidity AS FLOAT64) AS weather_relativeHumidity,
+        CAST(temperature AS FLOAT64) AS weather_temperature,
+        -- Additional weather features
+        CAST(precipitationChance AS FLOAT64) AS weather_probabilityOfPrecipitation,
+        -- County one-hot encoding
+        -- Time features
+        CAST(month AS INT64) AS month,
+        CAST(day_of_week AS INT64) AS day_of_week,
+        CAST(hour AS INT64) AS hour_of_day
+    )
+  )
+```
+
+This approach allows the model to scale to process predictions for all counties in Tennessee simultaneously, with minimal latency and maintenance overhead.
+
+## Cloud Infrastructure
+
+The application is designed to leverage Google Cloud services for production deployment:
+
+### BigQuery and BigQuery ML
+
+- **Data Warehousing**: Historical outage and weather data is stored in BigQuery tables for analysis
+- **Model Deployment**: TensorFlow Decision Forests models are exported to BigQuery ML
+- **SQL-Based Inference**: Predictions are made directly in BigQuery using ML.PREDICT functions
+- **Advantages**:
+  - Serverless architecture with automatic scaling
+  - Low-latency predictions for all Tennessee counties
+  - Easy integration with other Google Cloud services
+  - Cost-efficient for large-scale data processing
+
+### Cloud Run
+
+- Containerized deployment of both frontend and backend components
+- Auto-scaling based on traffic demands
+- Global load balancing for improved reliability
+- CI/CD integration for continuous deployment
+
+### Firebase
+
+- Real-time database for user profiles and organization data
+- Authentication for secure user access
+- Cloud Messaging for notification delivery
+- Storage for user uploads and report attachments
+
+### Future Cloud Integration
+
+- Vertex AI for advanced ML model management
+- Cloud Scheduler for periodic prediction updates
+- Pub/Sub for real-time weather alert processing
 
 ## Project Status
 
-This project is currently in development. The frontend components are implemented with placeholder functionality, and we've included the TensorFlow Decision Forest model under `src/app/prediction` for viewing and access. The data on the outages portion is a mixture of outputs from the model and placholder data.
+This project is currently in development. Key components implemented:
+
+- Frontend UI with Angular and Tailwind CSS
+- Prediction service with API integration
+- TensorFlow Decision Forests model
+- Firebase user and organization management
+- Google Maps integration
+- Weather data visualization
+
+Some features use placeholder data where real-time APIs are not yet connected.
 
 ## Future Work
 
-- Implement real-time data pipelines with an API connection to the model
-- Enhance model accuracy with additional features
-- Deploy the application to Google Cloud
-- Add mobile notifications for outage warnings
+- Deploy application on Google Cloud Run
+- Implement real-time data pipelines
+- Enhance model accuracy with additional weather features
+- Add mobile push notifications for outage warnings
+- Develop a mobile app version
 - Expand coverage to more counties and states
+- Integrate with utility company APIs
 
 ## License
 
