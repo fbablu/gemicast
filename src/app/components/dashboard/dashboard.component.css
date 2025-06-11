@@ -1,4 +1,4 @@
-/* src/app/components/dashboard/enhanced-dashboard.component.css */
+/* src/app/components/dashboard/dashboard.component.css */
 
 .industry-card:hover {
   transform: translateY(-2px);
@@ -13,11 +13,10 @@ mat-card {
 }
 
 @keyframes pulse {
-  0%,
-  100% {
+  0%, 100% {
     opacity: 1;
   }
   50% {
-    opacity: 0.5;
+    opacity: .5;
   }
 }
