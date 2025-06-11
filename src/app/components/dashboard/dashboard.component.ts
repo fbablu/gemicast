@@ -1,131 +1,401 @@
 // src/app/components/dashboard/dashboard.component.ts
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { RouterModule } from '@angular/router';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { MatBadgeModule } from '@angular/material/badge';
-import { OutagesComponent } from '../outages/outages.component';
-import { PredictComponent } from '../predict/predict.component';
-import { HomeComponent } from '../home/home.component';
-import { MapComponent } from '../map/map.component';
-import { ProfileComponent } from '../profile/profile.component';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDividerModule } from '@angular/material/divider';
+
+interface IndustryConfig {
+  id: string;
+  name: string;
+  primaryTabs: string[];
+  keyMetrics: Array<{
+    id: string;
+    label: string;
+    value: string;
+    trend: 'up' | 'down' | 'stable';
+    critical: boolean;
+  }>;
+  quickActions: Array<{
+    id: string;
+    label: string;
+    icon: string;
+    color: string;
+  }>;
+}
 
 interface Tab {
   id: string;
   name: string;
   icon: string;
   description: string;
+  alertCount: number;
   industryRelevance: string[];
-  alertCount?: number;
-}
-
-interface IndustryConfig {
-  id: string;
-  name: string;
-  primaryTabs: string[];
-  dashboardMetrics: string[];
-  alertThresholds: {
-    high: number;
-    medium: number;
-  };
 }
 
 @Component({
   selector: 'app-dashboard',
-  templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.css'],
+  standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
+    MatToolbarModule,
+    MatSidenavModule,
     MatIconModule,
+    MatButtonModule,
+    MatCardModule,
     MatBadgeModule,
-    OutagesComponent,
-    PredictComponent,
-    HomeComponent,
-    MapComponent,
-    ProfileComponent,
+    MatMenuModule,
+    MatTooltipModule,
+    MatDividerModule,
   ],
-  standalone: true,
+  templateUrl: './dashboard.component.html',
+  styleUrls: ['./dashboard.component.css'],
 })
 export class DashboardComponent implements OnInit {
-  activeTab: string = 'home';
-  userIndustry: string = '';
-  userProfile: any = null;
+  activeTab = 'outages';
   sidebarCollapsed = false;
+  userIndustry = '';
+  userProfile: any = {};
+  unreadNotifications = 3;
 
   industryConfigs: IndustryConfig[] = [
     {
-      id: 'data-centers',
-      name: 'Data Centers',
-      primaryTabs: ['outages', 'predict', 'map'],
-      dashboardMetrics: ['uptime', 'workload_distribution', 'cooling_status'],
-      alertThresholds: { high: 85, medium: 60 },
+      id: 'construction',
+      name: 'Construction',
+      primaryTabs: ['outages', 'predict', 'map', 'profile'],
+      keyMetrics: [
+        {
+          id: 'active-sites',
+          label: 'Active Sites',
+          value: '8',
+          trend: 'stable',
+          critical: false,
+        },
+        {
+          id: 'risk-sites',
+          label: 'High Risk Sites',
+          value: '2',
+          trend: 'up',
+          critical: true,
+        },
+        {
+          id: 'downtime-cost',
+          label: 'Potential Daily Loss',
+          value: '$48K',
+          trend: 'up',
+          critical: true,
+        },
+        {
+          id: 'weather-score',
+          label: 'Weather Risk Score',
+          value: '7.2/10',
+          trend: 'up',
+          critical: false,
+        },
+      ],
+      quickActions: [
+        {
+          id: 'stage-generators',
+          label: 'Stage Generators',
+          icon: 'electrical_services',
+          color: '#f59e0b',
+        },
+        {
+          id: 'adjust-schedule',
+          label: 'Adjust Schedule',
+          icon: 'schedule',
+          color: '#3b82f6',
+        },
+        {
+          id: 'safety-alert',
+          label: 'Safety Alert',
+          icon: 'warning',
+          color: '#ef4444',
+        },
+        {
+          id: 'team-notify',
+          label: 'Notify Teams',
+          icon: 'group',
+          color: '#10b981',
+        },
+      ],
     },
     {
       id: 'healthcare',
       name: 'Healthcare',
-      primaryTabs: ['outages', 'predict', 'profile'],
-      dashboardMetrics: ['facility_status', 'cold_chain', 'emergency_power'],
-      alertThresholds: { high: 70, medium: 40 },
+      primaryTabs: ['outages', 'predict', 'map', 'profile'],
+      keyMetrics: [
+        {
+          id: 'facilities',
+          label: 'Facilities Monitored',
+          value: '4',
+          trend: 'stable',
+          critical: false,
+        },
+        {
+          id: 'critical-patients',
+          label: 'Critical Care Patients',
+          value: '23',
+          trend: 'stable',
+          critical: false,
+        },
+        {
+          id: 'backup-power',
+          label: 'Backup Power Status',
+          value: '96%',
+          trend: 'stable',
+          critical: false,
+        },
+        {
+          id: 'risk-level',
+          label: 'Facility Risk Level',
+          value: 'Medium',
+          trend: 'up',
+          critical: true,
+        },
+      ],
+      quickActions: [
+        {
+          id: 'test-generators',
+          label: 'Test Generators',
+          icon: 'power',
+          color: '#f59e0b',
+        },
+        {
+          id: 'patient-prep',
+          label: 'Patient Prep',
+          icon: 'local_hospital',
+          color: '#ef4444',
+        },
+        {
+          id: 'staff-alert',
+          label: 'Staff Alert',
+          icon: 'medical_services',
+          color: '#3b82f6',
+        },
+        {
+          id: 'emergency-plan',
+          label: 'Emergency Plan',
+          icon: 'emergency',
+          color: '#dc2626',
+        },
+      ],
     },
     {
-      id: 'construction',
-      name: 'Construction',
-      primaryTabs: ['predict', 'map', 'outages'],
-      dashboardMetrics: ['site_weather', 'equipment_status', 'schedule_risk'],
-      alertThresholds: { high: 75, medium: 50 },
+      id: 'data-centers',
+      name: 'Data Centers',
+      primaryTabs: ['outages', 'predict', 'map', 'profile'],
+      keyMetrics: [
+        {
+          id: 'uptime',
+          label: 'Current Uptime',
+          value: '99.97%',
+          trend: 'stable',
+          critical: false,
+        },
+        {
+          id: 'cooling-status',
+          label: 'Cooling Systems',
+          value: 'Optimal',
+          trend: 'stable',
+          critical: false,
+        },
+        {
+          id: 'power-usage',
+          label: 'Power Usage (PUE)',
+          value: '1.42',
+          trend: 'down',
+          critical: false,
+        },
+        {
+          id: 'outage-risk',
+          label: 'Outage Risk (24h)',
+          value: 'High',
+          trend: 'up',
+          critical: true,
+        },
+      ],
+      quickActions: [
+        {
+          id: 'migrate-workloads',
+          label: 'Migrate Workloads',
+          icon: 'cloud_sync',
+          color: '#3b82f6',
+        },
+        {
+          id: 'cooling-check',
+          label: 'Cooling Check',
+          icon: 'ac_unit',
+          color: '#06b6d4',
+        },
+        {
+          id: 'ups-status',
+          label: 'UPS Status',
+          icon: 'battery_charging_full',
+          color: '#10b981',
+        },
+        {
+          id: 'incident-prep',
+          label: 'Incident Prep',
+          icon: 'report_problem',
+          color: '#f59e0b',
+        },
+      ],
     },
   ];
 
   baseTabs: Tab[] = [
     {
-      id: 'home',
-      name: 'Overview',
-      icon: 'dashboard',
-      description: 'Industry-specific insights',
-      industryRelevance: ['all'],
-    },
-    {
       id: 'map',
       name: 'Risk Map',
       icon: 'map',
-      description: 'Geographic outage visualization',
-      industryRelevance: ['construction', 'utilities', 'telecommunications'],
+      description: 'Geographic risk visualization',
       alertCount: 0,
+      industryRelevance: ['all'],
     },
     {
       id: 'outages',
-      name: 'Outage Risk',
+      name: 'Outage Monitor',
       icon: 'warning',
-      description: 'County-specific assessments',
-      industryRelevance: ['data-centers', 'healthcare', 'manufacturing'],
-      alertCount: 0,
+      description: 'Current and predicted outages',
+      alertCount: 2,
+      industryRelevance: ['all'],
     },
     {
       id: 'predict',
-      name: 'AI Planning',
-      icon: 'auto_awesome',
-      description: 'Predictive scheduling assistant',
-      industryRelevance: ['construction', 'manufacturing', 'events'],
-      alertCount: 0,
+      name: 'AI Insights',
+      icon: 'psychology',
+      description: 'AI-powered predictions & assistant',
+      alertCount: 1,
+      industryRelevance: ['all'],
     },
     {
       id: 'profile',
       name: 'Organization',
-      icon: 'group',
-      description: 'Team & notification management',
+      icon: 'business',
+      description: 'Team & settings management',
+      alertCount: 0,
       industryRelevance: ['all'],
     },
   ];
 
-  get filteredTabs(): Tab[] {
-    if (!this.userIndustry) return this.baseTabs;
+  constructor() {}
 
-    const industryConfig = this.industryConfigs.find(
-      (c) => c.id === this.userIndustry,
+  ngOnInit(): void {
+    this.loadUserProfile();
+    this.updateAlertCounts();
+    this.setDefaultActiveTab();
+  }
+
+  loadUserProfile(): void {
+    const profile = localStorage.getItem('gemicast-user-profile');
+    if (profile) {
+      this.userProfile = JSON.parse(profile);
+      this.userIndustry = this.userProfile.industry;
+    }
+  }
+
+  updateAlertCounts(): void {
+    // Industry-specific alert simulation
+    const industryConfig = this.getCurrentIndustryConfig();
+    const criticalMetrics = industryConfig.keyMetrics.filter(
+      (m) => m.critical,
+    ).length;
+
+    if (criticalMetrics > 0) {
+      this.baseTabs.find((t) => t.id === 'outages')!.alertCount =
+        criticalMetrics;
+      this.baseTabs.find((t) => t.id === 'predict')!.alertCount = Math.ceil(
+        criticalMetrics / 2,
+      );
+    }
+  }
+
+  setDefaultActiveTab(): void {
+    const industryConfig = this.getCurrentIndustryConfig();
+    if (industryConfig.primaryTabs.length > 0) {
+      this.activeTab = industryConfig.primaryTabs[0];
+    }
+  }
+
+  getCurrentIndustryConfig(): IndustryConfig {
+    return (
+      this.industryConfigs.find((c) => c.id === this.userIndustry) || {
+        id: 'default',
+        name: 'Multi-Industry',
+        primaryTabs: ['outages', 'predict', 'map', 'profile'],
+        keyMetrics: [
+          {
+            id: 'total-alerts',
+            label: 'Active Alerts',
+            value: '3',
+            trend: 'stable',
+            critical: false,
+          },
+          {
+            id: 'risk-score',
+            label: 'Risk Score',
+            value: '6.8/10',
+            trend: 'up',
+            critical: false,
+          },
+          {
+            id: 'facilities',
+            label: 'Monitored Locations',
+            value: '12',
+            trend: 'stable',
+            critical: false,
+          },
+          {
+            id: 'uptime',
+            label: 'Overall Uptime',
+            value: '99.2%',
+            trend: 'stable',
+            critical: false,
+          },
+        ],
+        quickActions: [
+          {
+            id: 'view-alerts',
+            label: 'View Alerts',
+            icon: 'notification_important',
+            color: '#ef4444',
+          },
+          {
+            id: 'generate-report',
+            label: 'Generate Report',
+            icon: 'assessment',
+            color: '#3b82f6',
+          },
+          {
+            id: 'contact-support',
+            label: 'Contact Support',
+            icon: 'support_agent',
+            color: '#10b981',
+          },
+          {
+            id: 'settings',
+            label: 'Settings',
+            icon: 'settings',
+            color: '#6b7280',
+          },
+        ],
+      }
     );
-    if (!industryConfig) return this.baseTabs;
+  }
 
-    // Reorder tabs based on industry priority
+  getFilteredTabs(): Tab[] {
+    const industryConfig = this.getCurrentIndustryConfig();
     const prioritizedTabs = [...this.baseTabs];
+
     prioritizedTabs.sort((a, b) => {
       const aPriority = industryConfig.primaryTabs.indexOf(a.id);
       const bPriority = industryConfig.primaryTabs.indexOf(b.id);
@@ -140,109 +410,69 @@ export class DashboardComponent implements OnInit {
   }
 
   get industryName(): string {
-    const config = this.industryConfigs.find((c) => c.id === this.userIndustry);
-    return config ? config.name : 'Multi-Industry';
-  }
-
-  ngOnInit(): void {
-    this.loadUserProfile();
-    this.updateAlertCounts();
-
-    // Set default active tab based on industry
-    if (this.userIndustry) {
-      const industryConfig = this.industryConfigs.find(
-        (c) => c.id === this.userIndustry,
-      );
-      if (industryConfig && industryConfig.primaryTabs.length > 0) {
-        this.activeTab = industryConfig.primaryTabs[0];
-      }
-    }
-  }
-
-  loadUserProfile(): void {
-    const profile = localStorage.getItem('gemicast-user-profile');
-    if (profile) {
-      this.userProfile = JSON.parse(profile);
-      this.userIndustry = this.userProfile.industry;
-    }
-  }
-
-  updateAlertCounts(): void {
-    // Simulate alert counts based on industry
-    if (this.userIndustry === 'data-centers') {
-      this.baseTabs.find((t) => t.id === 'outages')!.alertCount = 3;
-      this.baseTabs.find((t) => t.id === 'predict')!.alertCount = 1;
-    } else if (this.userIndustry === 'healthcare') {
-      this.baseTabs.find((t) => t.id === 'outages')!.alertCount = 2;
-      this.baseTabs.find((t) => t.id === 'map')!.alertCount = 1;
-    }
+    return this.getCurrentIndustryConfig().name;
   }
 
   setActiveTab(tabId: string): void {
     this.activeTab = tabId;
   }
 
-  getActiveTabName(): string {
-    const tab = this.baseTabs.find((tab) => tab.id === this.activeTab);
-    return tab ? tab.name : '';
-  }
-
-  getTabDescription(tabId: string): string {
-    const tab = this.baseTabs.find((tab) => tab.id === tabId);
-    return tab ? tab.description : '';
-  }
-
   toggleSidebar(): void {
     this.sidebarCollapsed = !this.sidebarCollapsed;
   }
 
-  getIndustrySpecificMetrics(): any[] {
-    const config = this.industryConfigs.find((c) => c.id === this.userIndustry);
-    if (!config) return [];
+  getActiveTabName(): string {
+    const tab = this.baseTabs.find((t) => t.id === this.activeTab);
+    return tab ? tab.name : '';
+  }
 
-    // Return mock metrics based on industry
-    const metricsMap: { [key: string]: any } = {
-      uptime: { label: 'System Uptime', value: '99.97%', status: 'good' },
-      workload_distribution: {
-        label: 'Workload Balance',
-        value: '78%',
-        status: 'warning',
-      },
-      cooling_status: {
-        label: 'Cooling Efficiency',
-        value: '92%',
-        status: 'good',
-      },
-      facility_status: {
-        label: 'Facility Status',
-        value: 'Operational',
-        status: 'good',
-      },
-      cold_chain: {
-        label: 'Cold Chain Integrity',
-        value: '98%',
-        status: 'good',
-      },
-      emergency_power: {
-        label: 'Backup Power',
-        value: 'Ready',
-        status: 'good',
-      },
-      site_weather: {
-        label: 'Site Weather Risk',
-        value: 'Medium',
-        status: 'warning',
-      },
-      equipment_status: {
-        label: 'Equipment Health',
-        value: '94%',
-        status: 'good',
-      },
-      schedule_risk: { label: 'Schedule Risk', value: 'Low', status: 'good' },
-    };
+  getActiveTabIcon(): string {
+    const tab = this.baseTabs.find((t) => t.id === this.activeTab);
+    return tab ? tab.icon : 'dashboard';
+  }
 
-    return config.dashboardMetrics
-      .map((metric) => metricsMap[metric])
-      .filter(Boolean);
+  getTabDescription(tabId: string): string {
+    const tab = this.baseTabs.find((t) => t.id === tabId);
+    const industryConfig = this.getCurrentIndustryConfig();
+
+    if (tab) {
+      return `${tab.description} - Optimized for ${industryConfig.name} operations`;
+    }
+    return '';
+  }
+
+  getTotalAlerts(): number {
+    return this.baseTabs.reduce((total, tab) => total + tab.alertCount, 0);
+  }
+
+  getCurrentWeather(): string {
+    // Simulated weather data
+    const conditions = [
+      'Sunny',
+      'Partly Cloudy',
+      'Thunderstorms',
+      'Clear',
+      'Overcast',
+    ];
+    return conditions[Math.floor(Math.random() * conditions.length)];
+  }
+
+  getTrendIcon(trend: 'up' | 'down' | 'stable'): string {
+    switch (trend) {
+      case 'up':
+        return 'trending_up';
+      case 'down':
+        return 'trending_down';
+      case 'stable':
+        return 'trending_flat';
+      default:
+        return 'trending_flat';
+    }
+  }
+
+  hasCriticalMetrics(): boolean {
+    return this.getCurrentIndustryConfig().keyMetrics.some(
+      (metric) => metric.critical,
+    );
   }
 }
