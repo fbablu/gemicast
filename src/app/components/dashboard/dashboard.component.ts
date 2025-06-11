@@ -1,6 +1,4 @@
-// src/app/components/dashboard/dashboard.component.ts
-// Main dashboard controller managing tab navigation and display
-
+// Enhanced dashboard controller with improved navigation and state management
 import { CommonModule } from '@angular/common';
 import { Component, NgModule } from '@angular/core';
 import { CommonEngine } from '@angular/ssr/node';
@@ -14,6 +12,7 @@ interface Tab {
   id: string;
   name: string;
   icon: string;
+  description: string;
 }
 
 @Component({
@@ -31,13 +30,33 @@ interface Tab {
   standalone: true,
 })
 export class DashboardComponent {
-  activeTab: string = 'home';
+  activeTab: string = 'map'; // Start with map as it's most visual
 
   tabs: Tab[] = [
-    { id: 'map', name: 'Map', icon: 'map' },
-    { id: 'outages', name: 'Outages', icon: 'warning' },
-    { id: 'predict', name: 'Predict', icon: 'auto_awesome' },
-    { id: 'profile', name: 'Profile', icon: 'person' },
+    { 
+      id: 'map', 
+      name: 'Map View', 
+      icon: 'map',
+      description: 'Geographic outage visualization'
+    },
+    { 
+      id: 'outages', 
+      name: 'Risk Analysis', 
+      icon: 'warning',
+      description: 'County risk assessments'
+    },
+    { 
+      id: 'predict', 
+      name: 'AI Assistant', 
+      icon: 'auto_awesome',
+      description: 'Predictive insights & planning'
+    },
+    { 
+      id: 'profile', 
+      name: 'Settings', 
+      icon: 'person',
+      description: 'User & organization management'
+    },
   ];
 
   setActiveTab(tabId: string): void {
@@ -46,5 +65,14 @@ export class DashboardComponent {
 
   getActiveTabName(): string {
     return this.tabs.find((tab) => tab.id === this.activeTab)?.name || '';
+  }
+
+  getActiveTabDescription(): string {
+    return this.tabs.find((tab) => tab.id === this.activeTab)?.description || '';
+  }
+
+  shouldShowQuickStats(): boolean {
+    // Show quick stats on map and outages tabs
+    return ['map', 'outages'].includes(this.activeTab);
   }
 }
