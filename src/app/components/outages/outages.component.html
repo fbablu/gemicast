@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 <div class="outages-container">
   <div class="header-section">
     <h1>County Outage Risk Dashboard</h1>
@@ -209,248 +210,883 @@
                 <strong>Very Low Risk:</strong> {{ selectedCounty }} currently
                 shows a very low risk.
               </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Historical Data -->
-        <div
-          class="historical-data"
-          *ngIf="selectedCountyData && selectedCountyData.length > 0"
-        >
-          <h3>Historical Outage Risk Trends</h3>
-          <div class="trend-chart">
-            <div class="chart-bars">
-              <div class="bar-item" *ngFor="let item of selectedCountyData">
+              =======
+              <!-- Enhanced Outages component with modern risk visualization -->
+              <div class="h-full flex flex-col">
+                <!-- Header with Search and Filters -->
                 <div
-                  class="bar"
-                  [ngStyle]="{
-                    height: getBarHeight(item.score) + '%',
-                    'background-color': getColorForScore(item.score),
-                  }"
+                  class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6"
                 >
-                  <div class="bar-value">{{ item.score.toFixed(1) }}</div>
-                </div>
-              </div>
-            </div>
-            <div class="chart-labels">
-              <div class="year-labels">
-                <span
-                  class="year-label-item"
-                  *ngFor="let item of selectedCountyData"
-                  >{{ item.year }}</span
-                >
-              </div>
-            </div>
-          </div>
-        </div>
-        <div
-          *ngIf="
-            selectedCounty &&
-            (!selectedCountyData || selectedCountyData.length === 0)
-          "
-        >
-          <p>
-            No historical data points available to display a trend chart for
-            {{ selectedCounty }}.
-          </p>
-        </div>
-
-        <!-- County-specific insights -->
-        <div class="county-insights">
-          <h3>Analysis & Conditions</h3>
-          <div class="insight-content">
-            <p class="insight-text">
-              <strong>Insight:</strong> {{ countyInsight }}
-            </p>
-
-            <div class="weather-info">
-              <h4>Current Conditions</h4>
-              <div class="weather-data">
-                <div class="weather-item">
-                  <span class="weather-icon">🌡️</span>
-                  <span class="weather-label">Temp</span>
-                  <span class="weather-value"
-                    >{{ currentWeather.temperature }}°F</span
+                  <div
+                    class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0"
                   >
+                    <div>
+                      <h2
+                        class="text-2xl font-bold text-gray-900 dark:text-white"
+                      >
+                        Risk Analysis Dashboard
+                      </h2>
+                      <p class="text-gray-600 dark:text-gray-400 mt-1">
+                        Monitor and analyze power outage risks across Tennessee
+                        counties
+                      </p>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="flex items-center space-x-3">
+                      <button
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 flex items-center space-x-2"
+                      >
+                        <span class="material-icons text-sm">refresh</span>
+                        <span>Refresh Data</span>
+                      </button>
+                      <button
+                        class="px-4 py-2 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-200 flex items-center space-x-2"
+                      >
+                        <span class="material-icons text-sm">download</span>
+                        <span>Export</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div class="weather-item">
-                  <span class="weather-icon">💨</span>
-                  <span class="weather-label">Wind</span>
-                  <span class="weather-value"
-                    >{{ currentWeather.windSpeed }} mph</span
-                  >
-                </div>
-                <div class="weather-item">
-                  <span class="weather-icon">💧</span>
-                  <span class="weather-label">Precip</span>
-                  <span class="weather-value"
-                    >{{
-                      (currentWeather.precipitation * 100).toFixed(0)
-                    }}%</span
-                  >
+
+                <!-- Main Content -->
+                <div class="flex-1 overflow-auto">
+                  <div class="p-6">
+                    <!-- County Selection and Search -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                      <!-- County Search Card -->
+                      <div class="lg:col-span-1">
+                        <div
+                          class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+                        >
+                          <h3
+                            class="text-lg font-semibold text-gray-900 dark:text-white mb-4"
+                          >
+                            Select County
+                          </h3>
+
+                          <!-- Dropdown Selection -->
+                          <div class="mb-4">
+                            <label
+                              class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                              >Choose from list</label
+                            >
+                            <select
+                              [formControl]="predictionForm.get('county')!"
+                              (change)="onSubmit()"
+                              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                            >
+                              <option [ngValue]="null" disabled>
+                                -- Select a County --
+                              </option>
+                              <option
+                                *ngFor="let county of counties"
+                                [value]="county"
+                              >
+                                {{ county }}
+                              </option>
+                            </select>
+                          </div>
+
+                          <!-- Search Input -->
+                          <div class="relative">
+                            <label
+                              class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                              >Or search</label
+                            >
+                            <input
+                              type="text"
+                              placeholder="Type county name..."
+                              [formControl]="searchControl"
+                              class="w-full px-3 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                            />
+                            <span
+                              class="material-icons absolute left-3 top-9 text-gray-400"
+                              >search</span
+                            >
+
+                            <!-- Search Suggestions -->
+                            <div
+                              *ngIf="
+                                filteredCounties.length > 0 &&
+                                searchControl.value
+                              "
+                              class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto"
+                            >
+                              <button
+                                *ngFor="let county of filteredCounties"
+                                (click)="selectCounty(county)"
+                                class="w-full px-4 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+                              >
+                                {{ county }}
+                              </button>
+                            </div>
+                          </div>
+
+                          <!-- Tennessee Map Preview -->
+                          <div class="mt-6">
+                            <h4
+                              class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3"
+                            >
+                              Quick Select on Map
+                            </h4>
+                            <div
+                              class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4"
+                            >
+                              <svg viewBox="0 0 250 150" class="w-full h-24">
+                                <polygon
+                                  points="5,5 245,5 230,145 10,145"
+                                  class="fill-gray-200 dark:fill-gray-600 stroke-gray-300 dark:stroke-gray-500"
+                                  stroke-width="1"
+                                />
+                                <g
+                                  *ngFor="let county of mapCounties"
+                                  (click)="selectCounty(county.name)"
+                                  [class.fill-blue-500]="
+                                    selectedCounty === county.name
+                                  "
+                                  [class.fill-gray-300]="
+                                    selectedCounty !== county.name
+                                  "
+                                  [class.dark:fill-gray-500]="
+                                    selectedCounty !== county.name
+                                  "
+                                  class="cursor-pointer hover:fill-blue-400 transition-colors duration-200"
+                                >
+                                  <rect
+                                    [attr.x]="county.x"
+                                    [attr.y]="county.y"
+                                    [attr.width]="county.width"
+                                    [attr.height]="county.height"
+                                    class="stroke-white dark:stroke-gray-800"
+                                    stroke-width="0.5"
+                                  />
+                                  <text
+                                    [attr.x]="county.x + county.width / 2"
+                                    [attr.y]="county.y + county.height / 2 + 2"
+                                    class="text-xs fill-current text-center"
+                                    text-anchor="middle"
+                                  >
+                                    {{ county.name.substring(0, 3) }}
+                                  </text>
+                                </g>
+                              </svg>
+                            </div>
+                            >>>>>>> Stashed changes
+                          </div>
+                        </div>
+                      </div>
+
+                      <<<<<<< Updated upstream
+                      <!-- Historical Data -->
+                      <div
+                        class="historical-data"
+                        *ngIf="
+                          selectedCountyData && selectedCountyData.length > 0
+                        "
+                      >
+                        <h3>Historical Outage Risk Trends</h3>
+                        <div class="trend-chart">
+                          <div class="chart-bars">
+                            <div
+                              class="bar-item"
+                              *ngFor="let item of selectedCountyData"
+                            >
+                              <div
+                                class="bar"
+                                [ngStyle]="{
+                                  height: getBarHeight(item.score) + '%',
+                                  'background-color': getColorForScore(
+                                    item.score
+                                  ),
+                                }"
+                              >
+                                <div class="bar-value">
+                                  {{ item.score.toFixed(1) }}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="chart-labels">
+                            <div class="year-labels">
+                              <span
+                                class="year-label-item"
+                                *ngFor="let item of selectedCountyData"
+                                >{{ item.year }}</span
+                              >
+                              =======
+                              <!-- Risk Summary Cards -->
+                              <div class="lg:col-span-2">
+                                <div *ngIf="selectedCounty" class="space-y-6">
+                                  <!-- Current Risk Status -->
+                                  <div
+                                    class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+                                  >
+                                    <div
+                                      class="flex items-center justify-between mb-4"
+                                    >
+                                      <h3
+                                        class="text-lg font-semibold text-gray-900 dark:text-white"
+                                      >
+                                        {{ selectedCounty }} County Risk Status
+                                      </h3>
+                                      <button
+                                        (click)="refreshData()"
+                                        [disabled]="weatherDataLoading"
+                                        class="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200"
+                                      >
+                                        <span
+                                          class="material-icons"
+                                          [class.animate-spin]="
+                                            weatherDataLoading
+                                          "
+                                          >refresh</span
+                                        >
+                                      </button>
+                                    </div>
+
+                                    <div class="flex items-center space-x-6">
+                                      <!-- Risk Score Circle -->
+                                      <div class="relative">
+                                        <div
+                                          class="w-24 h-24 rounded-full flex items-center justify-center text-white font-bold text-xl"
+                                          [style.background-color]="
+                                            getColorForScore(latestScore)
+                                          "
+                                        >
+                                          {{ latestScore.toFixed(1) }}%
+                                        </div>
+                                        <div
+                                          class="absolute -bottom-2 left-1/2 transform -translate-x-1/2"
+                                        >
+                                          <span
+                                            class="text-xs font-medium text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 px-2 py-1 rounded-full border border-gray-200 dark:border-gray-700"
+                                          >
+                                            {{
+                                              calculateRiskLevel(latestScore)
+                                            }}
+                                          </span>
+                                        </div>
+                                      </div>
+
+                                      <!-- Risk Details -->
+                                      <div class="flex-1">
+                                        <div
+                                          class="grid grid-cols-1 md:grid-cols-3 gap-4"
+                                        >
+                                          <div class="text-center">
+                                            <div
+                                              class="text-2xl font-bold text-gray-900 dark:text-white"
+                                            >
+                                              {{ currentWeather.temperature }}°F
+                                            </div>
+                                            <div
+                                              class="text-sm text-gray-600 dark:text-gray-400"
+                                            >
+                                              Temperature
+                                            </div>
+                                          </div>
+                                          <div class="text-center">
+                                            <div
+                                              class="text-2xl font-bold text-gray-900 dark:text-white"
+                                            >
+                                              {{ currentWeather.windSpeed }} mph
+                                            </div>
+                                            <div
+                                              class="text-sm text-gray-600 dark:text-gray-400"
+                                            >
+                                              Wind Speed
+                                            </div>
+                                          </div>
+                                          <div class="text-center">
+                                            <div
+                                              class="text-2xl font-bold text-gray-900 dark:text-white"
+                                            >
+                                              {{
+                                                (
+                                                  currentWeather.precipitation *
+                                                  100
+                                                ).toFixed(0)
+                                              }}%
+                                            </div>
+                                            <div
+                                              class="text-sm text-gray-600 dark:text-gray-400"
+                                            >
+                                              Precipitation
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        <!-- Weather Alert -->
+                                        <div
+                                          *ngIf="weatherAlert"
+                                          class="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg"
+                                        >
+                                          <div
+                                            class="flex items-center space-x-2"
+                                          >
+                                            <span
+                                              class="material-icons text-yellow-600 dark:text-yellow-400"
+                                              >warning</span
+                                            >
+                                            <span
+                                              class="text-sm font-medium text-yellow-800 dark:text-yellow-200"
+                                              >{{ weatherAlert }}</span
+                                            >
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <!-- Last Updated -->
+                                    <div
+                                      class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700"
+                                    >
+                                      <div
+                                        class="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400"
+                                      >
+                                        <span
+                                          >Last updated:
+                                          {{
+                                            formatDateTime(lastUpdated)
+                                          }}</span
+                                        >
+                                        <span
+                                          *ngIf="weatherDataLoading"
+                                          class="flex items-center space-x-2"
+                                        >
+                                          <div
+                                            class="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"
+                                          ></div>
+                                          <span>Updating...</span>
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <!-- Historical Trends -->
+                                  <div
+                                    *ngIf="
+                                      selectedCountyData &&
+                                      selectedCountyData.length > 0
+                                    "
+                                    class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+                                  >
+                                    <h3
+                                      class="text-lg font-semibold text-gray-900 dark:text-white mb-4"
+                                    >
+                                      Historical Risk Trends
+                                    </h3>
+
+                                    <div
+                                      class="h-64 bg-gray-50 dark:bg-gray-700 rounded-lg p-4"
+                                    >
+                                      <div
+                                        class="flex items-end justify-between h-full space-x-2"
+                                      >
+                                        <div
+                                          *ngFor="
+                                            let item of selectedCountyData
+                                          "
+                                          class="flex-1 flex flex-col items-center"
+                                        >
+                                          <div
+                                            class="w-full bg-gray-200 dark:bg-gray-600 rounded-t-lg relative"
+                                            [style.height.%]="
+                                              getBarHeight(item.score)
+                                            "
+                                            [style.background-color]="
+                                              getColorForScore(item.score)
+                                            "
+                                          >
+                                            <div
+                                              class="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-900 dark:text-white"
+                                            >
+                                              {{ item.score.toFixed(1) }}
+                                            </div>
+                                          </div>
+                                          <div
+                                            class="text-xs text-gray-600 dark:text-gray-400 mt-2"
+                                          >
+                                            {{ item.year }}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <!-- Recommendations -->
+                                  <div
+                                    *ngIf="
+                                      recommendations &&
+                                      recommendations.length > 0
+                                    "
+                                    class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+                                  >
+                                    <h3
+                                      class="text-lg font-semibold text-gray-900 dark:text-white mb-4"
+                                    >
+                                      Recommendations
+                                    </h3>
+                                    <div class="space-y-3">
+                                      <div
+                                        *ngFor="let rec of recommendations"
+                                        class="flex items-start space-x-3"
+                                      >
+                                        <div
+                                          class="w-6 h-6 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                                        >
+                                          <span
+                                            class="material-icons text-blue-600 dark:text-blue-400 text-sm"
+                                            >lightbulb</span
+                                          >
+                                        </div>
+                                        <p
+                                          class="text-gray-700 dark:text-gray-300"
+                                        >
+                                          {{ rec }}
+                                        </p>
+                                      </div>
+                                      >>>>>>> Stashed changes
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div
+                                *ngIf="
+                                  selectedCounty &&
+                                  (!selectedCountyData ||
+                                    selectedCountyData.length === 0)
+                                "
+                              >
+                                <p>
+                                  No historical data points available to display
+                                  a trend chart for
+                                  {{ selectedCounty }}.
+                                </p>
+                              </div>
+
+                              <<<<<<< Updated upstream
+                              <!-- County-specific insights -->
+                              <div class="county-insights">
+                                <h3>Analysis & Conditions</h3>
+                                <div class="insight-content">
+                                  <p class="insight-text">
+                                    <strong>Insight:</strong>
+                                    {{ countyInsight }}
+                                  </p>
+
+                                  <div class="weather-info">
+                                    <h4>Current Conditions</h4>
+                                    <div class="weather-data">
+                                      <div class="weather-item">
+                                        <span class="weather-icon">🌡️</span>
+                                        <span class="weather-label">Temp</span>
+                                        <span class="weather-value"
+                                          >{{
+                                            currentWeather.temperature
+                                          }}°F</span
+                                        >
+                                      </div>
+                                      <div class="weather-item">
+                                        <span class="weather-icon">💨</span>
+                                        <span class="weather-label">Wind</span>
+                                        <span class="weather-value"
+                                          >{{
+                                            currentWeather.windSpeed
+                                          }}
+                                          mph</span
+                                        >
+                                      </div>
+                                      <div class="weather-item">
+                                        <span class="weather-icon">💧</span>
+                                        <span class="weather-label"
+                                          >Precip</span
+                                        >
+                                        <span class="weather-value"
+                                          >{{
+                                            (
+                                              currentWeather.precipitation * 100
+                                            ).toFixed(0)
+                                          }}%</span
+                                        >
+                                      </div>
+                                    </div>
+
+                                    <p
+                                      class="weather-description"
+                                      *ngIf="weatherDescription"
+                                    >
+                                      <span class="weather-icon">☁️</span>
+                                      {{ weatherDescription }}
+                                    </p>
+
+                                    <p
+                                      class="weather-alert"
+                                      *ngIf="weatherAlert"
+                                    >
+                                      <span class="alert-icon">⚠️</span>
+                                      {{ weatherAlert }}
+                                    </p>
+                                  </div>
+
+                                  <div
+                                    class="recommendation-box"
+                                    *ngIf="
+                                      recommendations &&
+                                      recommendations.length > 0
+                                    "
+                                  >
+                                    <h4>Recommendations</h4>
+                                    <ul class="recommendations">
+                                      <li *ngFor="let rec of recommendations">
+                                        {{ rec }}
+                                      </li>
+                                    </ul>
+                                  </div>
+                                  =======
+                                  <!-- No County Selected State -->
+                                  <div
+                                    *ngIf="!selectedCounty"
+                                    class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center"
+                                  >
+                                    <div
+                                      class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4"
+                                    >
+                                      <span
+                                        class="material-icons text-gray-400 text-2xl"
+                                        >location_on</span
+                                      >
+                                    </div>
+                                    <h3
+                                      class="text-lg font-semibold text-gray-900 dark:text-white mb-2"
+                                    >
+                                      Select a County
+                                    </h3>
+                                    <p class="text-gray-600 dark:text-gray-400">
+                                      Choose a county from the dropdown, search,
+                                      or click on the map to view its outage
+                                      risk analysis.
+                                    </p>
+                                    >>>>>>> Stashed changes
+                                  </div>
+                                </div>
+                              </div>
+
+                              <<<<<<< Updated upstream
+                              <div
+                                class="results-card placeholder-card"
+                                *ngIf="!selectedCounty"
+                              >
+                                <h2>Select a County</h2>
+                                <p>
+                                  Please select or search for a county, or click
+                                  on the map, to view its outage risk.
+                                </p>
+                              </div>
+
+                              <div class="coverage-info-card">
+                                <h2>Tennessee Outage Coverage</h2>
+                                <div class="coverage-stats">
+                                  <div class="coverage-year">
+                                    <div class="year-label">2024</div>
+                                    <div class="stats-container">
+                                      <div class="coverage-stat">
+                                        <div class="stat-value">3.55M</div>
+                                        <div class="stat-label">
+                                          Total Customers
+                                        </div>
+                                      </div>
+                                      <div class="coverage-stat">
+                                        <div class="stat-value">2.84M</div>
+                                        <div class="stat-label">
+                                          Covered Customers
+                                        </div>
+                                      </div>
+                                      <div class="coverage-stat">
+                                        <div class="stat-value">80%</div>
+                                        <div class="stat-label">
+                                          Coverage Rate
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="coverage-trend">
+                                    <h3>Historical Coverage Trend</h3>
+                                    <div class="trend-data">
+                                      <div class="trend-item">
+                                        <div class="trend-year">2020</div>
+                                        <div class="trend-bar">
+                                          <div
+                                            class="bar-fill"
+                                            style="width: 73%"
+                                          >
+                                            73%
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="trend-item">
+                                        <div class="trend-year">2021</div>
+                                        <div class="trend-bar">
+                                          <div
+                                            class="bar-fill"
+                                            style="width: 73%"
+                                          >
+                                            73%
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="trend-item">
+                                        <div class="trend-year">2022</div>
+                                        <div class="trend-bar">
+                                          <div
+                                            class="bar-fill"
+                                            style="width: 75%"
+                                          >
+                                            75%
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="trend-item">
+                                        <div class="trend-year">2023</div>
+                                        <div class="trend-bar">
+                                          <div
+                                            class="bar-fill"
+                                            style="width: 78%"
+                                          >
+                                            78%
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="trend-item">
+                                        <div class="trend-year">2024</div>
+                                        <div class="trend-bar">
+                                          <div
+                                            class="bar-fill"
+                                            style="width: 80%"
+                                          >
+                                            80%
+                                          </div>
+                                        </div>
+                                        =======
+                                        <!-- Tennessee Coverage Statistics -->
+                                        <div
+                                          class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+                                        >
+                                          <h3
+                                            class="text-lg font-semibold text-gray-900 dark:text-white mb-6"
+                                          >
+                                            Tennessee Outage Coverage & Trends
+                                          </h3>
+
+                                          <div
+                                            class="grid grid-cols-1 lg:grid-cols-2 gap-8"
+                                          >
+                                            <!-- Coverage Stats -->
+                                            <div>
+                                              <h4
+                                                class="text-md font-medium text-gray-900 dark:text-white mb-4"
+                                              >
+                                                2024 Coverage Statistics
+                                              </h4>
+                                              <div class="space-y-4">
+                                                <div
+                                                  class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                                                >
+                                                  <span
+                                                    class="text-gray-700 dark:text-gray-300"
+                                                    >Total Customers</span
+                                                  >
+                                                  <span
+                                                    class="font-semibold text-gray-900 dark:text-white"
+                                                    >3.55M</span
+                                                  >
+                                                </div>
+                                                <div
+                                                  class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                                                >
+                                                  <span
+                                                    class="text-gray-700 dark:text-gray-300"
+                                                    >Covered Customers</span
+                                                  >
+                                                  <span
+                                                    class="font-semibold text-gray-900 dark:text-white"
+                                                    >2.84M</span
+                                                  >
+                                                </div>
+                                                <div
+                                                  class="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-lg"
+                                                >
+                                                  <span
+                                                    class="text-gray-700 dark:text-gray-300"
+                                                    >Coverage Rate</span
+                                                  >
+                                                  <span
+                                                    class="font-semibold text-green-700 dark:text-green-400"
+                                                    >80%</span
+                                                  >
+                                                </div>
+                                              </div>
+                                            </div>
+
+                                            <!-- Trend Chart -->
+                                            <div>
+                                              <h4
+                                                class="text-md font-medium text-gray-900 dark:text-white mb-4"
+                                              >
+                                                Historical Coverage Trend
+                                              </h4>
+                                              <div class="space-y-3">
+                                                <div
+                                                  *ngFor="
+                                                    let year of [
+                                                      2020, 2021, 2022, 2023,
+                                                      2024,
+                                                    ];
+                                                    let i = index
+                                                  "
+                                                  class="flex items-center space-x-3"
+                                                >
+                                                  <span
+                                                    class="text-sm font-medium text-gray-600 dark:text-gray-400 w-12"
+                                                    >{{ year }}</span
+                                                  >
+                                                  <div
+                                                    class="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-3"
+                                                  >
+                                                    <div
+                                                      class="bg-blue-600 h-3 rounded-full transition-all duration-500"
+                                                      [style.width.%]="
+                                                        [73, 73, 75, 78, 80][i]
+                                                      "
+                                                    ></div>
+                                                  </div>
+                                                  <span
+                                                    class="text-sm font-medium text-gray-900 dark:text-white w-8"
+                                                    >{{
+                                                      [73, 73, 75, 78, 80][i]
+                                                    }}%</span
+                                                  >
+                                                  >>>>>>> Stashed changes
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <<<<<<< Updated upstream
+
+                                    <div class="state-summary">
+                                      <h2>Tennessee Outage Trends</h2>
+                                      <div class="yearly-summary">
+                                        <div class="yearly-chart">
+                                          <div class="chart-title">
+                                            Normalized Outage Metrics
+                                            (2014-2024)
+                                          </div>
+                                          <div class="metric-lines">
+                                            <div class="line-labels">
+                                              <div class="line-label">
+                                                <span
+                                                  class="color-dot outage-count"
+                                                ></span
+                                                ><span>Outage Count</span>
+                                              </div>
+                                              <div class="line-label">
+                                                <span
+                                                  class="color-dot max-duration"
+                                                ></span
+                                                ><span>Max Duration</span>
+                                              </div>
+                                              <div class="line-label">
+                                                <span
+                                                  class="color-dot customer-hours"
+                                                ></span
+                                                ><span>Customer Hours</span>
+                                              </div>
+                                            </div>
+                                            <div class="chart-area">
+                                              <svg
+                                                width="100%"
+                                                height="200"
+                                                viewBox="0 0 900 200"
+                                                preserveAspectRatio="none"
+                                              >
+                                                <polyline
+                                                  points="0,200 100,146 200,134 300,120 400,107 500,72 600,42 700,39 800,0"
+                                                  fill="none"
+                                                  stroke="#3f51b5"
+                                                  stroke-width="3"
+                                                />
+                                                <polyline
+                                                  points="0,200 100,132 200,70 300,52 400,126 500,117 600,40 700,93 800,0"
+                                                  fill="none"
+                                                  stroke="#ff4081"
+                                                  stroke-width="3"
+                                                />
+                                                <polyline
+                                                  points="0,200 100,165 200,161 300,88 400,163 500,150 600,60 700,129 800,0"
+                                                  fill="none"
+                                                  stroke="#4caf50"
+                                                  stroke-width="3"
+                                                />
+                                              </svg>
+                                              <div class="year-markers">
+                                                <span>2014</span
+                                                ><span>2016</span
+                                                ><span>2018</span
+                                                ><span>2020</span
+                                                ><span>2022</span
+                                                ><span>2024</span>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div class="trend-insights">
+                                          <p>
+                                            Tennessee has experienced a steady
+                                            increase in power outage events from
+                                            2014 to 2024, with significant jumps
+                                            in 2019-2020 and 2021-2022. Overall
+                                            normalized outage count has
+                                            increased significantly.
+                                          </p>
+                                          <p>
+                                            Maximum outage duration and customer
+                                            impact (customer-weighted hours)
+                                            both peaked in 2022, with
+                                            improvement in 2023-2024 due to grid
+                                            resilience initiatives.
+                                          </p>
+                                          <p>
+                                            Key counties with historically high
+                                            outage risk include Shelby, Obion,
+                                            Monroe, Jefferson, and Blount,
+                                            though risk can vary year to year.
+                                          </p>
+                                          <p class="data-source">
+                                            Last update: May 19, 2025
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    ======= >>>>>>> Stashed changes
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              <p class="weather-description" *ngIf="weatherDescription">
-                <span class="weather-icon">☁️</span> {{ weatherDescription }}
-              </p>
-
-              <p class="weather-alert" *ngIf="weatherAlert">
-                <span class="alert-icon">⚠️</span> {{ weatherAlert }}
-              </p>
-            </div>
-
-            <div
-              class="recommendation-box"
-              *ngIf="recommendations && recommendations.length > 0"
-            >
-              <h4>Recommendations</h4>
-              <ul class="recommendations">
-                <li *ngFor="let rec of recommendations">{{ rec }}</li>
-              </ul>
             </div>
           </div>
         </div>
-      </div>
-
-      <div class="results-card placeholder-card" *ngIf="!selectedCounty">
-        <h2>Select a County</h2>
-        <p>
-          Please select or search for a county, or click on the map, to view its
-          outage risk.
-        </p>
-      </div>
-
-      <div class="coverage-info-card">
-        <h2>Tennessee Outage Coverage</h2>
-        <div class="coverage-stats">
-          <div class="coverage-year">
-            <div class="year-label">2024</div>
-            <div class="stats-container">
-              <div class="coverage-stat">
-                <div class="stat-value">3.55M</div>
-                <div class="stat-label">Total Customers</div>
-              </div>
-              <div class="coverage-stat">
-                <div class="stat-value">2.84M</div>
-                <div class="stat-label">Covered Customers</div>
-              </div>
-              <div class="coverage-stat">
-                <div class="stat-value">80%</div>
-                <div class="stat-label">Coverage Rate</div>
-              </div>
-            </div>
-          </div>
-          <div class="coverage-trend">
-            <h3>Historical Coverage Trend</h3>
-            <div class="trend-data">
-              <div class="trend-item">
-                <div class="trend-year">2020</div>
-                <div class="trend-bar">
-                  <div class="bar-fill" style="width: 73%">73%</div>
-                </div>
-              </div>
-              <div class="trend-item">
-                <div class="trend-year">2021</div>
-                <div class="trend-bar">
-                  <div class="bar-fill" style="width: 73%">73%</div>
-                </div>
-              </div>
-              <div class="trend-item">
-                <div class="trend-year">2022</div>
-                <div class="trend-bar">
-                  <div class="bar-fill" style="width: 75%">75%</div>
-                </div>
-              </div>
-              <div class="trend-item">
-                <div class="trend-year">2023</div>
-                <div class="trend-bar">
-                  <div class="bar-fill" style="width: 78%">78%</div>
-                </div>
-              </div>
-              <div class="trend-item">
-                <div class="trend-year">2024</div>
-                <div class="trend-bar">
-                  <div class="bar-fill" style="width: 80%">80%</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="state-summary">
-    <h2>Tennessee Outage Trends</h2>
-    <div class="yearly-summary">
-      <div class="yearly-chart">
-        <div class="chart-title">Normalized Outage Metrics (2014-2024)</div>
-        <div class="metric-lines">
-          <div class="line-labels">
-            <div class="line-label">
-              <span class="color-dot outage-count"></span
-              ><span>Outage Count</span>
-            </div>
-            <div class="line-label">
-              <span class="color-dot max-duration"></span
-              ><span>Max Duration</span>
-            </div>
-            <div class="line-label">
-              <span class="color-dot customer-hours"></span
-              ><span>Customer Hours</span>
-            </div>
-          </div>
-          <div class="chart-area">
-            <svg
-              width="100%"
-              height="200"
-              viewBox="0 0 900 200"
-              preserveAspectRatio="none"
-            >
-              <polyline
-                points="0,200 100,146 200,134 300,120 400,107 500,72 600,42 700,39 800,0"
-                fill="none"
-                stroke="#3f51b5"
-                stroke-width="3"
-              />
-              <polyline
-                points="0,200 100,132 200,70 300,52 400,126 500,117 600,40 700,93 800,0"
-                fill="none"
-                stroke="#ff4081"
-                stroke-width="3"
-              />
-              <polyline
-                points="0,200 100,165 200,161 300,88 400,163 500,150 600,60 700,129 800,0"
-                fill="none"
-                stroke="#4caf50"
-                stroke-width="3"
-              />
-            </svg>
-            <div class="year-markers">
-              <span>2014</span><span>2016</span><span>2018</span
-              ><span>2020</span><span>2022</span><span>2024</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="trend-insights">
-        <p>
-          Tennessee has experienced a steady increase in power outage events
-          from 2014 to 2024, with significant jumps in 2019-2020 and 2021-2022.
-          Overall normalized outage count has increased significantly.
-        </p>
-        <p>
-          Maximum outage duration and customer impact (customer-weighted hours)
-          both peaked in 2022, with improvement in 2023-2024 due to grid
-          resilience initiatives.
-        </p>
-        <p>
-          Key counties with historically high outage risk include Shelby, Obion,
-          Monroe, Jefferson, and Blount, though risk can vary year to year.
-        </p>
-        <p class="data-source">Last update: May 19, 2025</p>
       </div>
     </div>
   </div>

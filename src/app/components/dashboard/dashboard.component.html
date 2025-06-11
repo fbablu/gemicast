@@ -1,17 +1,26 @@
-<!-- src/app/components/dashboard/dashboard.component.html -->
-<!-- Main dashboard template with responsive sidebar and content area -->
-
-<div class="flex h-screen bg-gray-100 dark:bg-gray-900">
-  <!-- Sidebar -->
-  <div class="w-16 md:w-64 bg-white dark:bg-gray-800 shadow-md">
+<!-- Modern dashboard with improved navigation and layout -->
+<div class="flex h-screen bg-gray-50 dark:bg-gray-900">
+  <!-- Enhanced Sidebar with better visual hierarchy -->
+  <div
+    class="w-16 md:w-72 bg-white dark:bg-gray-800 shadow-lg border-r border-gray-200 dark:border-gray-700 transition-all duration-300"
+  >
     <div class="flex flex-col h-full">
       <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-        <h1
-          class="text-xl font-bold text-center md:text-left text-primary hidden md:block"
-        >
-          Gemicast
-        </h1>
-        <h1 class="text-xl font-bold text-center md:hidden text-primary">G</h1>
+        <div class="flex items-center space-x-3">
+          <div
+            class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center"
+          >
+            <span class="text-white font-bold text-lg">G</span>
+          </div>
+          <div class="hidden md:block">
+            <h1 class="text-xl font-bold text-gray-900 dark:text-white">
+              Gemicast
+            </h1>
+            <p class="text-xs text-gray-500 dark:text-gray-400">
+              AI-Powered Outage Prediction
+            </p>
+          </div>
+        </div>
       </div>
       <nav class="flex-1 pt-4">
         <ul>
@@ -19,47 +28,217 @@
             <button
               (click)="setActiveTab(tab.id)"
               [ngClass]="{
-                'flex items-center w-full p-2 text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-700': true,
-                'bg-gray-100 dark:bg-gray-700 text-primary':
+                'flex items-center w-full p-3 text-left transition-all duration-200 rounded-lg group': true,
+                'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 shadow-sm border border-blue-200 dark:border-blue-800':
                   activeTab === tab.id,
-                'text-gray-600 dark:text-gray-400': activeTab !== tab.id,
+                'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white':
+                  activeTab !== tab.id,
               }"
             >
-              <div class="flex items-center justify-center w-10 h-10">
-                <span class="material-icons"> {{ tab.icon }} </span>
+              <!-- Icon container with better spacing -->
+              <div
+                class="flex items-center justify-center w-10 h-10 rounded-lg transition-colors duration-200"
+                [ngClass]="{
+                  'bg-blue-100 dark:bg-blue-800': activeTab === tab.id,
+                  'bg-gray-100 dark:bg-gray-600 group-hover:bg-gray-200 dark:group-hover:bg-gray-500':
+                    activeTab !== tab.id,
+                }"
+              >
+                <span class="material-icons text-lg">{{ tab.icon }}</span>
               </div>
 
-              <span class="ml-2 hidden md:inline">{{ tab.name }}</span>
+              <!-- Label with better typography -->
+              <div class="ml-3 hidden md:block">
+                <span class="font-medium text-sm">{{ tab.name }}</span>
+                <p class="text-xs opacity-75 mt-0.5">{{ tab.description }}</p>
+              </div>
+
+              <!-- Active indicator -->
+              <div
+                *ngIf="activeTab === tab.id"
+                class="absolute right-2 w-2 h-2 bg-blue-500 rounded-full hidden md:block"
+              ></div>
             </button>
           </li>
         </ul>
       </nav>
+
+      <!-- User section at bottom -->
+      <div class="p-3 border-t border-gray-200 dark:border-gray-700">
+        <div
+          class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+        >
+          <div
+            class="w-8 h-8 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center"
+          >
+            <span class="text-white text-sm font-medium">U</span>
+          </div>
+          <div class="hidden md:block">
+            <p class="text-sm font-medium text-gray-900 dark:text-white">
+              User
+            </p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Online</p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Main Content -->
-  <div class="flex-1 overflow-auto p-6">
-    <header class="mb-6">
-      <h1 class="text-2xl font-bold text-gray-800 dark:text-white">
-        {{ getActiveTabName() }}
-      </h1>
+  <!-- Main Content Area -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- Enhanced Header with breadcrumbs and actions -->
+    <header
+      class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+            {{ getActiveTabName() }}
+          </h1>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {{ getActiveTabDescription() }}
+          </p>
+        </div>
+
+        <!-- Header actions -->
+        <div class="flex items-center space-x-3">
+          <!-- Notification bell -->
+          <button
+            class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
+          >
+            <span class="material-icons">notifications</span>
+          </button>
+
+          <!-- Settings -->
+          <button
+            class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
+          >
+            <span class="material-icons">settings</span>
+          </button>
+
+          <!-- Dark mode toggle -->
+          <button
+            class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
+          >
+            <span class="material-icons">dark_mode</span>
+          </button>
+        </div>
+      </div>
     </header>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <app-home *ngIf="activeTab === 'home'" class="col-span-full"></app-home>
-      <app-map *ngIf="activeTab === 'map'" class="col-span-full"></app-map>
-      <app-outages
-        *ngIf="activeTab === 'outages'"
-        class="col-span-full"
-      ></app-outages>
-      <app-predict
-        *ngIf="activeTab === 'predict'"
-        class="col-span-full"
-      ></app-predict>
-      <app-profile
-        *ngIf="activeTab === 'profile'"
-        class="col-span-full"
-      ></app-profile>
-    </div>
+    <!-- Content Area with better spacing -->
+    <main class="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
+      <div class="p-6">
+        <!-- Quick Stats Cards (shown on all tabs) -->
+        <div
+          *ngIf="shouldShowQuickStats()"
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+        >
+          <div
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+          >
+            <div class="flex items-center">
+              <div class="p-3 bg-red-100 dark:bg-red-900/20 rounded-lg">
+                <span class="material-icons text-red-600 dark:text-red-400"
+                  >warning</span
+                >
+              </div>
+              <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  High Risk Areas
+                </p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white">
+                  3
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+          >
+            <div class="flex items-center">
+              <div class="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                <span class="material-icons text-blue-600 dark:text-blue-400"
+                  >cloud</span
+                >
+              </div>
+              <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Weather Alerts
+                </p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white">
+                  2
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+          >
+            <div class="flex items-center">
+              <div class="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                <span class="material-icons text-green-600 dark:text-green-400"
+                  >check_circle</span
+                >
+              </div>
+              <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Systems Online
+                </p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white">
+                  98%
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+          >
+            <div class="flex items-center">
+              <div class="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+                <span
+                  class="material-icons text-purple-600 dark:text-purple-400"
+                  >auto_awesome</span
+                >
+              </div>
+              <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  AI Predictions
+                </p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white">
+                  24h
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div
+          class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 min-h-[600px]"
+        >
+          <app-home
+            *ngIf="activeTab === 'home'"
+            class="block w-full"
+          ></app-home>
+          <app-map *ngIf="activeTab === 'map'" class="block w-full"></app-map>
+          <app-outages
+            *ngIf="activeTab === 'outages'"
+            class="block w-full"
+          ></app-outages>
+          <app-predict
+            *ngIf="activeTab === 'predict'"
+            class="block w-full"
+          ></app-predict>
+          <app-profile
+            *ngIf="activeTab === 'profile'"
+            class="block w-full"
+          ></app-profile>
+        </div>
+      </div>
+    </main>
   </div>
 </div>
